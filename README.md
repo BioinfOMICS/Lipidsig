@@ -13,7 +13,7 @@ In 2021/08/03, we provide the source code of LipidSig on the Lipidsig Github.
 <br>
 To install the LipidSig web service on your own linux device:
 1. install shiny-server service 
-2. clone our LipidSig repository into /srv/shiny-server/LipidSig
+2. clone LipidSig and put the folder under /srv/shiny-server/
 3. http://[<I>your IP address</I>]/LipisSig
 
 ## System requirements
