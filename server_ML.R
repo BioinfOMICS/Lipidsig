@@ -1,3 +1,4 @@
+##test5.v22
 
 #######################################
 #######################################
@@ -7,10 +8,6 @@
 #######################################
 #######################################
 
-observeEvent(input$ML_link_to_FAQ4, {
-  updateTabsetPanel(session, 'narbarpage', 'FAQ')
-  updateNavlistPanel(session, "navlistPanel_FAQ2", selected = 'FAQ4')
-})
 
 ############################
 ####  Assign variables  ####
@@ -101,6 +98,11 @@ output$ML.demo.download <- downloadHandler(
 observeEvent(input$ML_demo_upload, {
   
   if(input$ML_demo_upload > 0){
+    progressSweetAlert(
+      session = session, id = "ML_demo_upload_progress",
+      title = "Work in progress",
+      display_pct = TRUE, value = 0
+    )
     
     #### shinyjs show/hide main panel ####
     shinyjs::show('ML_demo_mainPanel_div')
@@ -126,40 +128,16 @@ observeEvent(input$ML_demo_upload, {
       })
     })
     
+    updateProgressBar(
+      session = session,
+      id = "ML_demo_upload_progress",
+      value = 25
+    )
+    
     #### Output: ML.demo.exp ####
     output$ML.demo.exp <- renderDataTable(server = FALSE,{
       isolate({
-        DT::datatable(ML_exp_transform_data(), 
-                      #caption = 'Lipid expression data',
-                      #colnames = c('feature', ML_group_info()$label_name),
-                      escape = FALSE, selection = 'none', rownames = FALSE, 
-                      class = "nowrap row-border",
-                      extensions = c('Buttons', 'Scroller'),
-                      options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                     deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                     dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                     columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-      })
-    })
-    #### Output: ML.demo.cond ####
-    output$ML.demo.cond <- renderDataTable(server = FALSE,{
-      isolate({
-        DT::datatable(ML_cond_tab(), 
-                      #caption = 'Lipid expression data',
-                      #colnames = c('feature', ML_group_info()$label_name),
-                      escape = FALSE, selection = 'none', rownames = FALSE, 
-                      class = "nowrap row-border",
-                      extensions = c('Buttons', 'Scroller'),
-                      options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                     deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                     dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                     columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-      })
-    })
-    #### Output: ML.demo.lipid.char ####
-    output$ML.demo.lipid.char <- renderDataTable(server = FALSE,{
-      isolate({
-        DT::datatable(ML_lipid_char_table(), 
+        DT::datatable(ML_exp_transform_data() %>% mutate_if(is.numeric, ~round(., 5)), 
                       #caption = 'Lipid expression data',
                       #colnames = c('feature', ML_group_info()$label_name),
                       escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -172,12 +150,68 @@ observeEvent(input$ML_demo_upload, {
       })
     })
     
+    updateProgressBar(
+      session = session,
+      id = "ML_demo_upload_progress",
+      value = 50
+    )
+    
+    #### Output: ML.demo.cond ####
+    output$ML.demo.cond <- renderDataTable(server = FALSE,{
+      isolate({
+        DT::datatable(ML_cond_tab() %>% mutate_if(is.numeric, ~round(., 5)), 
+                      #caption = 'Lipid expression data',
+                      #colnames = c('feature', ML_group_info()$label_name),
+                      escape = FALSE, selection = 'none', rownames = FALSE, 
+                      class = "nowrap row-border",
+                      extensions = c('Buttons', 'Scroller'),
+                      options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                     deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                     dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                     columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+      })
+    })
+    
+    updateProgressBar(
+      session = session,
+      id = "ML_demo_upload_progress",
+      value = 75
+    )
+    
+    #### Output: ML.demo.lipid.char ####
+    output$ML.demo.lipid.char <- renderDataTable(server = FALSE,{
+      isolate({
+        DT::datatable(ML_lipid_char_table() %>% mutate_if(is.numeric, ~round(., 5)), 
+                      #caption = 'Lipid expression data',
+                      #colnames = c('feature', ML_group_info()$label_name),
+                      escape = FALSE, selection = 'none', rownames = FALSE, 
+                      class = "nowrap row-border",
+                      extensions = c('Buttons', 'Scroller'),
+                      options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                     deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                     dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                     columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+      })
+    })
+    
+    updateProgressBar(
+      session = session,
+      id = "ML_demo_upload_progress",
+      value = 100
+    )
+    closeSweetAlert(session = session)
   }
   
 }) #observeEvent(input$ML_demo_upload
 
 #### ML user dataset ####
 observeEvent(input$ML_user_upload, {
+  
+  progressSweetAlert(
+    session = session, id = "ML_user_upload_progress",
+    title = "Work in progress",
+    display_pct = TRUE, value = 0
+  )
   
   #### shinyjs show/hide main panel ####
   shinyjs::show('ML_user_mainPanel_div')
@@ -240,6 +274,11 @@ observeEvent(input$ML_user_upload, {
                    remove_na=input$ML_rm_NA,remove_na_pct=input$ML_rm_NA_pct)[[1]]
       })
     })
+    updateProgressBar(
+      session = session,
+      id = "ML_user_upload_progress",
+      value = 25
+    )
     ## condition_table
     variables$ML.check.cond.tab.user <- data.table::fread(input$ML_user_cond$datapath, header = T,
                                                           stringsAsFactors = F, check.names = F, 
@@ -272,7 +311,11 @@ observeEvent(input$ML_user_upload, {
         })
       })
     }
-    
+    updateProgressBar(
+      session = session,
+      id = "ML_user_upload_progress",
+      value = 50
+    )
     #### rename column name ####
     ## exp_data
     variables$ML.exp.user.col1 <- colnames(variables$ML.exp.data.user)[1]
@@ -285,7 +328,11 @@ observeEvent(input$ML_user_upload, {
       variables$ML.lipid.char.user.col1 <- colnames(variables$ML.lipid.char.tab.user)[1]
       colnames(variables$ML.lipid.char.tab.user)[1] <- 'feature'
     }
-    
+    updateProgressBar(
+      session = session,
+      id = "ML_user_upload_progress",
+      value = 70
+    )
     # #### Output: ML.user.exp ####
     # output$ML.user.exp <- renderDataTable(server = FALSE,{
     #   DT::datatable(ML_exp_transform_data(), 
@@ -362,7 +409,7 @@ observeEvent(input$ML_user_upload, {
           #### Output: ML.user.exp ####
           output$ML.user.exp <- renderDataTable(server = FALSE,{
             isolate({
-              DT::datatable(ML_exp_transform_data(), 
+              DT::datatable(ML_exp_transform_data() %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$ML.exp.user.col1, colnames(variables$ML.exp.data.user)[-1]),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -377,7 +424,7 @@ observeEvent(input$ML_user_upload, {
           #### Output: ML.user.cond ####
           output$ML.user.cond <- renderDataTable(server = FALSE,{
             isolate({
-              DT::datatable(ML_cond_tab(), 
+              DT::datatable(ML_cond_tab() %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$ML.cond.user.col1, colnames(variables$ML.cond.tab.user)[-1]),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -394,7 +441,7 @@ observeEvent(input$ML_user_upload, {
             isolate({
               validate(need(!is.null(ML_lipid_char_table()), "Not uploaded"))
               
-              DT::datatable(ML_lipid_char_table(), 
+              DT::datatable(ML_lipid_char_table() %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$ML.lipid.char.user.col1, colnames(variables$ML.lipid.char.tab.user)[-1]),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -447,7 +494,7 @@ observeEvent(input$ML_user_upload, {
           #### Output: ML.user.exp ####
           output$ML.user.exp <- renderDataTable(server = FALSE,{
             isolate({
-              DT::datatable(ML_exp_transform_data(), 
+              DT::datatable(ML_exp_transform_data() %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$ML.exp.user.col1, colnames(variables$ML.exp.data.user)[-1]),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -462,7 +509,7 @@ observeEvent(input$ML_user_upload, {
           #### Output: ML.user.cond ####
           output$ML.user.cond <- renderDataTable(server = FALSE,{
             isolate({
-              DT::datatable(ML_cond_tab(), 
+              DT::datatable(ML_cond_tab() %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$ML.cond.user.col1, colnames(variables$ML.cond.tab.user)[-1]),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -479,7 +526,7 @@ observeEvent(input$ML_user_upload, {
             isolate({
               validate(need(!is.null(ML_lipid_char_table()), "Not uploaded"))
               
-              DT::datatable(ML_lipid_char_table(), 
+              DT::datatable(ML_lipid_char_table() %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$ML.lipid.char.user.col1, colnames(variables$ML.lipid.char.tab.user)[-1]),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -501,6 +548,13 @@ observeEvent(input$ML_user_upload, {
       }
       
     }) #observe
+    
+    updateProgressBar(
+      session = session,
+      id = "ML_user_upload_progress",
+      value = 100
+    )
+    closeSweetAlert(session = session)
   #}) #isolate
   
 }) #observeEvent(input$ML_user_upload
@@ -677,6 +731,7 @@ observeEvent(input$ML_demo_start, {
       )
       
     }
+    
     updateProgressBar(
       session = session,
       id = "ML_demo_progress",
@@ -775,6 +830,7 @@ observeEvent(input$ML_user_start, {
       )
       
     }
+    
     updateProgressBar(
       session = session,
       id = "ML_user_progress",
@@ -788,7 +844,62 @@ observeEvent(input$ML_user_start, {
   
 }) #observeEvent(input$ML_user_start
 
-
+#### Update select input ####
+num.fea <- reactive({
+  nrow(variables$ML.data.process[[1]])
+})
+observe({
+  if(!is.null(num.fea())){
+    num.fea <- num.fea()
+    fea.cond <- c(2, 3, 5, 10, 20, 50, 100)
+    fea.cond2 <- c(2, 3, 5, 10, 20, 50, 100,num.fea)
+    select.fea <- fea.cond[which(fea.cond < num.fea)]
+    select.fea2 <- sort(unique(fea.cond2[which(fea.cond2 <= 50)]))
+    if(num.fea < 10){
+      updateSelectInput(session,
+                        inputId = 'ML_ROC_PR_feature_number',
+                        choices = c(select.fea, num.fea),
+                        selected = num.fea)
+      updateSelectInput(session,
+                        inputId = 'ML_sam_prob_feature_number',
+                        choices = c(select.fea, num.fea),
+                        selected = num.fea)
+      updateSelectInput(session, 
+                        inputId = 'ML_SHAP_feature_number', 
+                        choices = c(select.fea2), 
+                        selected = num.fea)
+      updateSelectInput(session,
+                        inputId = 'ML_algorithm_feature_number',
+                        choices = c(select.fea, num.fea), 
+                        selected = num.fea)
+      updateSelectInput(session,
+                        inputId = 'ML_network_feature_number', 
+                        choices = c(select.fea, num.fea),
+                        selected = num.fea)
+    }else{
+      updateSelectInput(session, 
+                        inputId = 'ML_ROC_PR_feature_number', 
+                        choices = c(select.fea, num.fea), 
+                        selected = 10)
+      updateSelectInput(session,
+                        inputId = 'ML_sam_prob_feature_number',
+                        choices = c(select.fea, num.fea),
+                        selected = 10)
+      updateSelectInput(session, 
+                        inputId = 'ML_SHAP_feature_number', 
+                        choices = c(select.fea2), 
+                        selected = 10)
+      updateSelectInput(session,
+                        inputId = 'ML_network_feature_number', 
+                        choices = c(select.fea, num.fea),
+                        selected = 10)
+      updateSelectInput(session,
+                        inputId = 'ML_algorithm_feature_number',
+                        choices = c(select.fea, num.fea), 
+                        selected = 10)
+    }
+  }
+})
 
 ################################
 ################################
@@ -922,7 +1033,7 @@ output$ML.evalution.plot <- renderPlotly({
 output$ML.evalution.table <- renderDataTable(server = FALSE,{
   
   validate(need(!is.null(evalution_plot_result()[[1]]), "Without evalution table"))
-  DT::datatable(evalution_plot_result()[[1]], 
+  DT::datatable(evalution_plot_result()[[1]] %>% mutate_if(is.numeric, ~round(., 5)), 
                 #caption = 'Lipid expression data',
                 colnames = c('Selection method', 'Classifier', 'CV run', 'Feature number', 'Evaluation index', 'Value', 'Mean value over all CVs'),
                 escape = FALSE, selection = 'none', rownames = TRUE, 
@@ -978,7 +1089,7 @@ output$ML.cm.plot <- renderPlotly({
 output$ML.probability.table <- renderDataTable(server = FALSE,{
   
   validate(need(!is.null(probability_plot_result()[[1]]), "Without probability table"))
-  DT::datatable(probability_plot_result()[[1]], 
+  DT::datatable(probability_plot_result()[[1]] %>% mutate_if(is.numeric, ~round(., 5)), 
                 #caption = 'Lipid expression data',
                 colnames = c('Feature selection', 'Classifier', 'Feature number', 'Sample ID', 'Actual group', 'Predicted probability', 'Predicted group'),
                 escape = FALSE, selection = 'none', rownames = TRUE, 
@@ -1065,7 +1176,7 @@ output$ML.fea.impo.plot <- renderPlotly({
 output$ML.fea.freq.table <- renderDataTable(server = FALSE,{
   
   validate(need(!is.null(feature_plot_result()[[1]]), "Without feature frequency table"))
-  DT::datatable(feature_plot_result()[[1]], 
+  DT::datatable(feature_plot_result()[[1]] %>% mutate_if(is.numeric, ~round(., 5)), 
                 #caption = 'Lipid expression data',
                 colnames = c('Feature selection', 'Classifier', 'Feature number', 'Feature', 'Selected frequency'),
                 escape = FALSE, selection = 'none', rownames = TRUE, 
@@ -1082,7 +1193,7 @@ output$ML.fea.freq.table <- renderDataTable(server = FALSE,{
 output$ML.fea.impo.table <- renderDataTable(server = FALSE,{
   
   validate(need(!is.null(feature_plot_result()[[3]]), "Without feature importance table"))
-  DT::datatable(feature_plot_result()[[3]], 
+  DT::datatable(feature_plot_result()[[3]] %>% mutate_if(is.numeric, ~round(., 5)), 
                 #caption = 'Lipid expression data',
                 colnames = c('Feature selection', 'Classifier', 'Feature number', 'Feature', 'Average importance'),
                 escape = FALSE, selection = 'none', rownames = TRUE, 
@@ -1195,7 +1306,7 @@ observeEvent(input$ML_SHAP_start, {
     output$ML.shap.long.table <- renderDataTable(server = FALSE,{
       
       validate(need(!is.null(variables$ML.SHAP.result[[2]]), "Without shap long table"))
-      DT::datatable(variables$ML.SHAP.result[[2]], 
+      DT::datatable(variables$ML.SHAP.result[[2]] %>% mutate_if(is.numeric, ~round(., 5)), 
                     #caption = 'Lipid expression data',
                     colnames = c('Sample ID', 'Feature', 'Shapley value', 'Feature value', 'Normalized feature value', 'Mean shapley value'),
                     escape = FALSE, selection = 'none', rownames = TRUE, 
@@ -1242,7 +1353,7 @@ observeEvent(input$ML_SHAP_start, {
       output$ML.SHAP.forceplot.table <- renderDataTable(server = FALSE,{
         
         validate(need(!is.null(SHAP_forceplot_result[[1]]), "Without SHAP forceplot table"))
-        DT::datatable(SHAP_forceplot_result[[1]], 
+        DT::datatable(SHAP_forceplot_result[[1]] %>% mutate_if(is.numeric, ~round(., 5)), 
                       #caption = 'Lipid expression data',
                       #colnames = c('feature', ML_group_info()$label_name),
                       escape = FALSE, selection = 'none', rownames = TRUE, 
