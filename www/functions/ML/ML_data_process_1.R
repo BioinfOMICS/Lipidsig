@@ -1,6 +1,6 @@
 ML_data_process_1 <- function(exp_data, group_info, lipid_char_table, char_var){
   
-  source('/media/md1200/analysis/Script/lipid_web/Species2Char_20210113.R')
+  source('www/functions/Species2Char.R')
   
   if((!is.null(lipid_char_table))&&(!is.null(char_var))){
     char_num <- length(char_var)
