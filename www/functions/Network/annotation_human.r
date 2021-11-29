@@ -5,7 +5,7 @@ annotation <- function(genelist, ref.genelist, database = 'KEGG', sig_pvalue = 0
   
   require(topGO)
   require(tidyverse)
-  source('/media/md1200/analysis/Script/lipid_web/Network_functions/function_code.r')
+  source('www/functions/function_code.r')
   dataDir = file.path(environmentDir, "data")
   
   ## plot Gene ontology ##
