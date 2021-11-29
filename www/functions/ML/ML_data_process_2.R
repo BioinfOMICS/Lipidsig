@@ -7,7 +7,7 @@ ML_data_process_2 <- function(ML_data, exclude_var_missing=T,
                               centering=F,
                               scaling=F){
   
-  source('/media/md1200/analysis/Script/lipid_web/data_process.R')
+  source('www/functions/data_process.R')
   #new
   combo <- unique(ML_data[[1]]$type)
   char_data <- list()
