@@ -8,6 +8,10 @@
 #######################################
 #######################################
 
+observeEvent(input$ML_link_to_FAQ4, {
+  updateTabsetPanel(session, 'narbarpage', 'FAQ')
+  updateNavlistPanel(session, "navlistPanel_FAQ2", selected = 'FAQ4')
+})
 
 ############################
 ####  Assign variables  ####
