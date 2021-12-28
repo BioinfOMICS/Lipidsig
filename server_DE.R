@@ -1,3 +1,4 @@
+##test5.v27
 
 #############################################
 #############################################
@@ -7,10 +8,7 @@
 #############################################
 #############################################
 
-observeEvent(input$DE_link_to_FAQ4, {
-  updateTabsetPanel(session, 'narbarpage', 'FAQ')
-  updateNavlistPanel(session, "navlistPanel_FAQ2", selected = 'FAQ4')
-})
+
 
 ############################
 ####  Assign variables  ####
@@ -265,6 +263,11 @@ output$DE.demo.download <- downloadHandler(
 observeEvent(input$DE_demo_upload, {
   
   if(input$DE_demo_upload > 0){
+    progressSweetAlert(
+      session = session, id = "DE_demo_progress",
+      title = "Work in progress",
+      display_pct = TRUE, value = 0
+    )
     
     #### shinyjs show/hide main panel ####
     shinyjs::show('DE_demo_mainPanel_div')
@@ -290,40 +293,16 @@ observeEvent(input$DE_demo_upload, {
       })
     })
     
+    updateProgressBar(
+      session = session,
+      id = "DE_demo_progress",
+      value = 20
+    )
+    
     #### Output: DE.demo.exp ####
     output$DE.demo.exp <- renderDataTable(server = FALSE,{
       isolate({
-        DT::datatable(DE_exp_transform_data(), 
-                      #caption = 'Lipid expression data',
-                      #colnames = c('feature', ML_group_info()$label_name),
-                      escape = FALSE, selection = 'none', rownames = FALSE, 
-                      class = "nowrap row-border",
-                      extensions = c('Buttons', 'Scroller'),
-                      options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                     deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                     dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                     columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-      })
-    })
-    #### Output: DE.demo.group.info ####
-    output$DE.demo.group.info <- renderDataTable(server = FALSE,{
-      isolate({
-        DT::datatable(DE_group_info(), 
-                      #caption = 'Lipid expression data',
-                      #colnames = c('feature', ML_group_info()$label_name),
-                      escape = FALSE, selection = 'none', rownames = FALSE, 
-                      class = "nowrap row-border",
-                      extensions = c('Buttons', 'Scroller'),
-                      options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                     deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                     dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                     columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-      })
-    })
-    #### Output: DE.demo.lipid.char ####
-    output$DE.demo.lipid.char <- renderDataTable(server = FALSE,{
-      isolate({
-        DT::datatable(DE_lipid_char_table(), 
+        DT::datatable(DE_exp_transform_data() %>% mutate_if(is.numeric, ~round(., 5)), 
                       #caption = 'Lipid expression data',
                       #colnames = c('feature', ML_group_info()$label_name),
                       escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -336,12 +315,64 @@ observeEvent(input$DE_demo_upload, {
       })
     })
     
+    updateProgressBar(
+      session = session,
+      id = "DE_demo_progress",
+      value = 50
+    )
+    #### Output: DE.demo.group.info ####
+    output$DE.demo.group.info <- renderDataTable(server = FALSE,{
+      isolate({
+        DT::datatable(DE_group_info() %>% mutate_if(is.numeric, ~round(., 5)), 
+                      #caption = 'Lipid expression data',
+                      #colnames = c('feature', ML_group_info()$label_name),
+                      escape = FALSE, selection = 'none', rownames = FALSE, 
+                      class = "nowrap row-border",
+                      extensions = c('Buttons', 'Scroller'),
+                      options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                     deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                     dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                     columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+      })
+    })
+    updateProgressBar(
+      session = session,
+      id = "DE_demo_progress",
+      value = 70
+    )
+    
+    #### Output: DE.demo.lipid.char ####
+    output$DE.demo.lipid.char <- renderDataTable(server = FALSE,{
+      isolate({
+        DT::datatable(DE_lipid_char_table() %>% mutate_if(is.numeric, ~round(., 5)), 
+                      #caption = 'Lipid expression data',
+                      #colnames = c('feature', ML_group_info()$label_name),
+                      escape = FALSE, selection = 'none', rownames = FALSE, 
+                      class = "nowrap row-border",
+                      extensions = c('Buttons', 'Scroller'),
+                      options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                     deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                     dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                     columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+      })
+    })
+    updateProgressBar(
+      session = session,
+      id = "DE_demo_progress",
+      value = 100
+    )
+    closeSweetAlert(session = session)
   }
   
 }) #observeEvent(input$DE_demo_upload
 
 #### DE user dataset ####
 observeEvent(input$DE_user_upload, {
+  progressSweetAlert(
+    session = session, id = "DE_user_progress",
+    title = "Work in progress",
+    display_pct = TRUE, value = 0
+  )
   
   #### shinyjs show/hide main panel ####
   shinyjs::show('DE_user_mainPanel_div')
@@ -404,6 +435,11 @@ observeEvent(input$DE_user_upload, {
                    remove_na=input$DE_rm_NA,remove_na_pct=input$DE_rm_NA_pct)[[1]]
       })
     })
+    updateProgressBar(
+      session = session,
+      id = "DE_user_progress",
+      value = 20
+    )
     ## group_info
     variables$DE.check.group.info.user <- data.table::fread(input$DE_user_group$datapath, header = T,
                                                             stringsAsFactors = F, check.names = F, 
@@ -415,6 +451,11 @@ observeEvent(input$DE_user_upload, {
                    group_name=input$DE_user_ref_group,file_path=input$DE_user_group$datapath)[[1]]
       })
     })
+    updateProgressBar(
+      session = session,
+      id = "DE_user_progress",
+      value = 40
+    )
     ## lipid_char_table
     if(!is.null(input$DE_user_char)){
       variables$DE.check.lipid.char.tab.user <- data.table::fread(input$DE_user_char$datapath, header = T, 
@@ -436,7 +477,11 @@ observeEvent(input$DE_user_upload, {
         })
       })
     }
-    
+    updateProgressBar(
+      session = session,
+      id = "DE_user_progress",
+      value = 60
+    )
     #### rename column name ####
     ## exp_data
     variables$DE.exp.user.col1 <- colnames(variables$DE.exp.data.user)[1]
@@ -460,7 +505,11 @@ observeEvent(input$DE_user_upload, {
       }
     }
     
-    
+    updateProgressBar(
+      session = session,
+      id = "DE_user_progress",
+      value = 80
+    )
     ## lipid_char_table
     if(!is.null(variables$DE.lipid.char.tab.user)){
       variables$DE.lipid.char.user.col1 <- colnames(variables$DE.lipid.char.tab.user)[1]
@@ -549,7 +598,7 @@ observeEvent(input$DE_user_upload, {
           output$DE.user.exp <- renderDataTable(server = FALSE,{
             isolate({
               validate(need(!is.null(DE_exp_transform_data()), "Some error is in your expression data, please check your data and re-upload it."))
-              DT::datatable(DE_exp_transform_data(), 
+              DT::datatable(DE_exp_transform_data() %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$DE.exp.user.col1, colnames(variables$DE.exp.data.user)[-1]),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -565,7 +614,7 @@ observeEvent(input$DE_user_upload, {
           output$DE.user.group.info <- renderDataTable(server = FALSE,{
             isolate({
               validate(need(!is.null(variables$DE.group.info.user), "Some error is in your group information, please check your data and re-upload it."))
-              DT::datatable(variables$DE.group.info.user, 
+              DT::datatable(variables$DE.group.info.user %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$DE.group.user.col1, variables$DE.group.user.col2, variables$DE.group.user.col3, variables$DE.group.user.col4),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -581,7 +630,7 @@ observeEvent(input$DE_user_upload, {
           output$DE.user.lipid.char <- renderDataTable(server = FALSE,{
             isolate({
               validate(need(!is.null(DE_lipid_char_table()), "Not uploaded"))
-              DT::datatable(DE_lipid_char_table(), 
+              DT::datatable(DE_lipid_char_table() %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$DE.lipid.char.user.col1, colnames(variables$DE.lipid.char.tab.user)[-1]),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -638,7 +687,7 @@ observeEvent(input$DE_user_upload, {
           output$DE.user.exp <- renderDataTable(server = FALSE,{
             isolate({
               validate(need(!is.null(DE_exp_transform_data()), "Some error is in your expression data, please check your data and re-upload it."))
-              DT::datatable(DE_exp_transform_data(), 
+              DT::datatable(DE_exp_transform_data() %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$DE.exp.user.col1, colnames(variables$DE.exp.data.user)[-1]),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -654,7 +703,7 @@ observeEvent(input$DE_user_upload, {
           output$DE.user.group.info <- renderDataTable(server = FALSE,{
             isolate({
               validate(need(!is.null(variables$DE.group.info.user), "Some error is in your group information, please check your data and re-upload it."))
-              DT::datatable(variables$DE.group.info.user, 
+              DT::datatable(variables$DE.group.info.user %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$DE.group.user.col1, variables$DE.group.user.col2, variables$DE.group.user.col3, variables$DE.group.user.col4),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -670,7 +719,7 @@ observeEvent(input$DE_user_upload, {
           output$DE.user.lipid.char <- renderDataTable(server = FALSE,{
             isolate({
               validate(need(!is.null(DE_lipid_char_table()), "Not uploaded"))
-              DT::datatable(DE_lipid_char_table(), 
+              DT::datatable(DE_lipid_char_table() %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$DE.lipid.char.user.col1, colnames(variables$DE.lipid.char.tab.user)[-1]),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -693,6 +742,12 @@ observeEvent(input$DE_user_upload, {
       
     }) #observe
     
+    updateProgressBar(
+      session = session,
+      id = "DE_user_progress",
+      value = 100
+    )
+    closeSweetAlert(session = session)
   #}) #isolate
   
 }) #observeEvent(input$DE_user_upload
@@ -1059,41 +1114,77 @@ observeEvent(input$DE_analysis_start, {
       
       validate(need(sum(!is.na(plot_MA_Vol()$m.log.p))==nrow(plot_MA_Vol()), "Without volcano plot"))
       key <- plot_MA_Vol()$feature
-      
-      plot_ly(data = plot_MA_Vol(),
-              x = ~ as.numeric(M),
-              y = ~ as.numeric(m.log.p),
-              type = "scatter",
-              mode = "markers",
-              color = ~sig_log2fc.pvalue_colors,
-              colors = c("#4169E1", "#DDDDDD", "#FF4500"),
-              marker = list(size = 4),
-              hoverinfo = "text",
-              text = ~ paste(
-                "</br>Lipid:",
-                plot_MA_Vol()$feature,
-                "</br>A value:",
-                round(as.numeric(A), 4),
-                "</br>M value:",
-                round(as.numeric(M), 4), 
-                "</br>-log10(p-value):",
-                round(-log10(p_value), 4),
-                #round(p_value, 4),
-                "</br>-log10(padj):",
-                round(-log10(p_adj), 4)),
-              #round(p_adj, 4)),
-              key =  ~ key,
-              source = "vol") %>%
-        layout(xaxis = list(title = "M = log<sub>2</sub>(exp)-log<sub>2</sub>(ctrl)"),
-               yaxis = list(title = "-log<sub>10</sub>(p-value)"),
-               title = "Volcano Plot",
-               #annotations = annotation,
-               legend = list(title = list(text = "Significant lipid"),
-                             orientation = 'h',
-                             xanchor = "center",
-                             x = 0.5,
-                             y = -0.18)
-        )
+      if (input$DE_sig_p == "p"){
+        plot_ly(data = plot_MA_Vol(),
+                x = ~ as.numeric(M),
+                y = ~ as.numeric(m.log.p),
+                type = "scatter",
+                mode = "markers",
+                color = ~sig_log2fc.pvalue_colors,
+                colors = c("#4169E1", "#DDDDDD", "#FF4500"),
+                marker = list(size = 4),
+                hoverinfo = "text",
+                text = ~ paste(
+                  "</br>Lipid:",
+                  plot_MA_Vol()$feature,
+                  "</br>A value:",
+                  round(as.numeric(A), 4),
+                  "</br>M value:",
+                  round(as.numeric(M), 4), 
+                  "</br>-log10(p-value):",
+                  round(-log10(p_value), 4),
+                  #round(p_value, 4),
+                  "</br>-log10(padj):",
+                  round(-log10(p_adj), 4)),
+                #round(p_adj, 4)),
+                key =  ~ key,
+                source = "vol") %>%
+          layout(xaxis = list(title = "M = log<sub>2</sub>(exp)-log<sub>2</sub>(ctrl)"),
+                 yaxis = list(title = "-log<sub>10</sub>(p-value)"),
+                 title = "Volcano Plot",
+                 #annotations = annotation,
+                 legend = list(title = list(text = "Significant lipid"),
+                               orientation = 'h',
+                               xanchor = "center",
+                               x = 0.5,
+                               y = -0.18)
+          )
+      }else{
+        plot_ly(data = plot_MA_Vol(),
+                x = ~ as.numeric(M),
+                y = ~ as.numeric(-log10(p_adj)),
+                type = "scatter",
+                mode = "markers",
+                color = ~sig_log2fc.pvalue_colors,
+                colors = c("#4169E1", "#DDDDDD", "#FF4500"),
+                marker = list(size = 4),
+                hoverinfo = "text",
+                text = ~ paste(
+                  "</br>Lipid:",
+                  plot_MA_Vol()$feature,
+                  "</br>A value:",
+                  round(as.numeric(A), 4),
+                  "</br>M value:",
+                  round(as.numeric(M), 4), 
+                  "</br>-log10(p-value):",
+                  round(-log10(p_value), 4),
+                  #round(p_value, 4),
+                  "</br>-log10(padj):",
+                  round(-log10(p_adj), 4)),
+                #round(p_adj, 4)),
+                key =  ~ key,
+                source = "vol") %>%
+          layout(xaxis = list(title = "M = log<sub>2</sub>(exp)-log<sub>2</sub>(ctrl)"),
+                 yaxis = list(title = "-log<sub>10</sub>(padj)"),
+                 title = "Volcano Plot",
+                 #annotations = annotation,
+                 legend = list(title = list(text = "Significant lipid"),
+                               orientation = 'h',
+                               xanchor = "center",
+                               x = 0.5,
+                               y = -0.18)
+          )
+      }
       
       
     }) #output$DE.species.volcano <- renderPlotly
@@ -1184,883 +1275,930 @@ observeEvent(input$DE_species_dim_redu_reset,{
   shinyjs::reset("DE_species_dim_redu_reset_div")
   
 }) #observeEvent(input$DE_species_dim_redu_reset
+shinyjs::hide('DE_species_dim_redu_result_div')
 
 #### control start button ####
 observeEvent(input$DE_species_dim_redu_start,{
-  if(submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_species_sig(),check_NA=T,feature_num=6,sig_count=2)[[1]]!=TRUE){
-    showModal(modalDialog(
-      title = "Important message",
-      submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_species_sig(),check_NA=T,feature_num=6,sig_count=2)[[2]],
-      easyClose = TRUE
-    ))
-  }else{
-    #### shinyjs show/hide results ####
-    shinyjs::show('DE_species_dim_redu_result_div')
+  if(input$DE_data_source == 'DE_demo_data'){
     
-    #isolate({
-      if(input$DE_data_source == 'DE_demo_data'){
+    observeEvent(input$DE_species_dim_redu_method,{
+      if(input$DE_species_dim_redu_method == 'pca'){
+        feature_num_check=2
+        sample_num_check=6
+        shinyjs::hide('DE_species_dim_redu_result_div')
+      }else if(input$DE_species_dim_redu_method == 'plsda'){
+        feature_num_check=6
+        sample_num_check=6
+        shinyjs::hide('DE_species_dim_redu_result_div')
+      }else if(input$DE_species_dim_redu_method == 'tsne'){
+        feature_num_check=4
+        sample_num_check=2
+        shinyjs::hide('DE_species_dim_redu_result_div')
+      }else{
+        feature_num_check=2
+        sample_num_check=2
+        shinyjs::hide('DE_species_dim_redu_result_div')
+      }
+      
+      
+      if(submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_species_sig(),check_NA=T,feature_num=6,sample_num=sample_num_check,sig_count=2)[[1]]!=TRUE){
+        showModal(modalDialog(
+          title = "Important message",
+          submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_species_sig(),check_NA=T,feature_num=6,sample_num=sample_num_check,sig_count=2)[[2]],
+          easyClose = TRUE
+        ))
+      }else{
+        #### shinyjs show/hide results ####
+        shinyjs::show('DE_species_dim_redu_result_div')
+      }
+      #### Function: PCA ####
+      if(input$DE_species_dim_redu_method == 'pca'){
         
-        observeEvent(input$DE_species_dim_redu_method,{
-          #### Function: PCA ####
-          if(input$DE_species_dim_redu_method == 'pca'){
+        if(input$DE_species_cluster_method == 'kmeans'){
+          
+          variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                 scaling=input$DE_species_pca_scale, 
+                                                 centering=input$DE_species_pca_center, 
+                                                 cluster_method=input$DE_species_cluster_method, 
+                                                 group_num = input$DE_species_kmeans_group)
+          
+        }else if(input$DE_species_cluster_method == 'kmedoids'){
+          
+          variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                 scaling=input$DE_species_pca_scale, 
+                                                 centering=input$DE_species_pca_center, 
+                                                 cluster_method=input$DE_species_cluster_method, 
+                                                 group_num = input$DE_species_pam_group, 
+                                                 var1 = input$DE_species_pam_metric)
+          
+        }else if(input$DE_species_cluster_method == 'hclustering'){
+          
+          variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                 scaling=input$DE_species_pca_scale, 
+                                                 centering=input$DE_species_pca_center, 
+                                                 cluster_method=input$DE_species_cluster_method, 
+                                                 group_num = input$DE_species_hclust_group, 
+                                                 var1 = input$DE_species_hclust_dist, 
+                                                 var2 = input$DE_species_hclust_hclust)
+          
+        }else if(input$DE_species_cluster_method == 'dbscan'){
+          
+          variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                 scaling=input$DE_species_pca_scale, 
+                                                 centering=input$DE_species_pca_center, 
+                                                 cluster_method=input$DE_species_cluster_method, 
+                                                 var1 = input$DE_species_dbscan_eps, 
+                                                 var2 = input$DE_species_dbscan_minPts)
+          
+        }else if(input$DE_species_cluster_method == 'group_info'){
+          
+          variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                 scaling=input$DE_species_pca_scale, 
+                                                 centering=input$DE_species_pca_center, 
+                                                 cluster_method=input$DE_species_cluster_method)
+          
+        }
+        
+        #### Output: DE.species.pca.biplot ####
+        output$DE.species.pca.biplot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.pca.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.pca.result[[4]]
+          })
+        })
+        
+        #### Output: DE.species.pca.screeplot ####
+        output$DE.species.pca.screeplot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.pca.result[[5]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.pca.result[[5]]
+          })
+        })
+        
+        #### Output: DE.species.pca.rotated.data ####
+        output$DE.species.pca.rotated.data <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.pca.result[[2]]), "Table not showing. Missing value imputation is recommended."))
             
-            if(input$DE_species_cluster_method == 'kmeans'){
-              
-              variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                     scaling=input$DE_species_pca_scale, 
-                                                     centering=input$DE_species_pca_center, 
-                                                     cluster_method=input$DE_species_cluster_method, 
+            DT::datatable(variables$DE.species.pca.result[[2]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.species.pca.rotated.data <- renderDataTable
+        
+        #### Output: DE.species.pca.contrib.table ####
+        output$DE.species.pca.contrib.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.pca.result[[3]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.species.pca.result[[3]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.species.pca.contrib.table <- renderDataTable
+        
+      }else if(input$DE_species_dim_redu_method == 'plsda'){
+        
+        if(input$DE_species_cluster_method == 'kmeans'){
+          
+          variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
+                                                     ncomp = 2, 
+                                                     scaling = input$DE_species_plsda_scale,
+                                                     cluster_method = input$DE_species_cluster_method, 
                                                      group_num = input$DE_species_kmeans_group)
-              
-            }else if(input$DE_species_cluster_method == 'kmedoids'){
-              
-              variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                     scaling=input$DE_species_pca_scale, 
-                                                     centering=input$DE_species_pca_center, 
-                                                     cluster_method=input$DE_species_cluster_method, 
+          
+        }else if(input$DE_species_cluster_method == 'kmedoids'){
+          
+          variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
+                                                     ncomp = 2, 
+                                                     scaling = input$DE_species_plsda_scale,
+                                                     cluster_method = input$DE_species_cluster_method, 
                                                      group_num = input$DE_species_pam_group, 
                                                      var1 = input$DE_species_pam_metric)
-              
-            }else if(input$DE_species_cluster_method == 'hclustering'){
-              
-              variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                     scaling=input$DE_species_pca_scale, 
-                                                     centering=input$DE_species_pca_center, 
-                                                     cluster_method=input$DE_species_cluster_method, 
+          
+        }else if(input$DE_species_cluster_method == 'hclustering'){
+          
+          variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
+                                                     ncomp = 2, 
+                                                     scaling = input$DE_species_plsda_scale,
+                                                     cluster_method = input$DE_species_cluster_method, 
                                                      group_num = input$DE_species_hclust_group, 
                                                      var1 = input$DE_species_hclust_dist, 
                                                      var2 = input$DE_species_hclust_hclust)
-              
-            }else if(input$DE_species_cluster_method == 'dbscan'){
-              
-              variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                     scaling=input$DE_species_pca_scale, 
-                                                     centering=input$DE_species_pca_center, 
-                                                     cluster_method=input$DE_species_cluster_method, 
+          
+        }else if(input$DE_species_cluster_method == 'dbscan'){
+          
+          variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
+                                                     ncomp = 2, 
+                                                     scaling = input$DE_species_plsda_scale,
+                                                     cluster_method = input$DE_species_cluster_method, 
                                                      var1 = input$DE_species_dbscan_eps, 
                                                      var2 = input$DE_species_dbscan_minPts)
-              
-            }else if(input$DE_species_cluster_method == 'group_info'){
-              
-              variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                     scaling=input$DE_species_pca_scale, 
-                                                     centering=input$DE_species_pca_center, 
-                                                     cluster_method=input$DE_species_cluster_method)
-              
-            }
-            
-            #### Output: DE.species.pca.biplot ####
-            output$DE.species.pca.biplot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.pca.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.pca.result[[4]]
-              })
-            })
-            
-            #### Output: DE.species.pca.screeplot ####
-            output$DE.species.pca.screeplot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.pca.result[[5]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.pca.result[[5]]
-              })
-            })
-            
-            #### Output: DE.species.pca.rotated.data ####
-            output$DE.species.pca.rotated.data <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.pca.result[[2]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.pca.result[[2]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.species.pca.rotated.data <- renderDataTable
-            
-            #### Output: DE.species.pca.contrib.table ####
-            output$DE.species.pca.contrib.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.pca.result[[3]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.pca.result[[3]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.species.pca.contrib.table <- renderDataTable
-            
-          }else if(input$DE_species_dim_redu_method == 'plsda'){
-            
-            if(input$DE_species_cluster_method == 'kmeans'){
-              
-              variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
-                                                         ncomp = 2, 
-                                                         scaling = input$DE_species_plsda_scale,
-                                                         cluster_method = input$DE_species_cluster_method, 
-                                                         group_num = input$DE_species_kmeans_group)
-              
-            }else if(input$DE_species_cluster_method == 'kmedoids'){
-              
-              variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
-                                                         ncomp = 2, 
-                                                         scaling = input$DE_species_plsda_scale,
-                                                         cluster_method = input$DE_species_cluster_method, 
-                                                         group_num = input$DE_species_pam_group, 
-                                                         var1 = input$DE_species_pam_metric)
-              
-            }else if(input$DE_species_cluster_method == 'hclustering'){
-              
-              variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
-                                                         ncomp = 2, 
-                                                         scaling = input$DE_species_plsda_scale,
-                                                         cluster_method = input$DE_species_cluster_method, 
-                                                         group_num = input$DE_species_hclust_group, 
-                                                         var1 = input$DE_species_hclust_dist, 
-                                                         var2 = input$DE_species_hclust_hclust)
-              
-            }else if(input$DE_species_cluster_method == 'dbscan'){
-              
-              variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
-                                                         ncomp = 2, 
-                                                         scaling = input$DE_species_plsda_scale,
-                                                         cluster_method = input$DE_species_cluster_method, 
-                                                         var1 = input$DE_species_dbscan_eps, 
-                                                         var2 = input$DE_species_dbscan_minPts)
-              
-            }else if(input$DE_species_cluster_method == 'group_info'){
-              
-              variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
-                                                         ncomp = 2, 
-                                                         scaling = input$DE_species_plsda_scale,
-                                                         cluster_method = input$DE_species_cluster_method)
-              
-            }
-            
-            #### Output: DE.species.plsda.sample.plot ####
-            output$DE.species.plsda.sample.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.plsda.result[[3]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.plsda.result[[3]]
-              })
-            })
-            
-            #### Output: DE.species.plsda.variable.plot ####
-            output$DE.species.plsda.variable.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.plsda.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.plsda.result[[4]]
-              })
-            })
-            
-            #### Output: DE.species.plsda.variate.table ####
-            output$DE.species.plsda.variate.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.plsda.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.plsda.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #DE.species.plsda.variate.table <- renderDataTable
-            
-            #### Output: DE.species.plsda.loading.table ####
-            output$DE.species.plsda.loading.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.plsda.result[[2]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.plsda.result[[2]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.species.plsda.loading.table <- renderDataTable
-            
-          }else if(input$DE_species_dim_redu_method == 'tsne'){
-            
-            if(input$DE_species_cluster_method == 'kmeans'){
-              
-              variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       pca=input$DE_species_tsne_pca, 
-                                                       perplexity=input$DE_species_tsne_perplexity,
-                                                       max_iter=input$DE_species_tsne_max_iter, 
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_kmeans_group)
-              
-            }else if(input$DE_species_cluster_method == 'kmedoids'){
-              
-              variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       pca=input$DE_species_tsne_pca, 
-                                                       perplexity=input$DE_species_tsne_perplexity,
-                                                       max_iter=input$DE_species_tsne_max_iter, 
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_pam_group, 
-                                                       var1 = input$DE_species_pam_metric)
-              
-            }else if(input$DE_species_cluster_method == 'hclustering'){
-              
-              variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       pca=input$DE_species_tsne_pca, 
-                                                       perplexity=input$DE_species_tsne_perplexity,
-                                                       max_iter=input$DE_species_tsne_max_iter, 
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_hclust_group, 
-                                                       var1 = input$DE_species_hclust_dist, 
-                                                       var2 = input$DE_species_hclust_hclust)
-              
-            }else if(input$DE_species_cluster_method == 'dbscan'){
-              
-              variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       pca=input$DE_species_tsne_pca, 
-                                                       perplexity=input$DE_species_tsne_perplexity,
-                                                       max_iter=input$DE_species_tsne_max_iter, 
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       var1 = input$DE_species_dbscan_eps, 
-                                                       var2 = input$DE_species_dbscan_minPts)
-              
-            }else if(input$DE_species_cluster_method == 'group_info'){
-              
-              variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       pca=input$DE_species_tsne_pca, 
-                                                       perplexity=input$DE_species_tsne_perplexity,
-                                                       max_iter=input$DE_species_tsne_max_iter, 
-                                                       cluster_method=input$DE_species_cluster_method)
-              
-            }
-            
-            #### Output: DE.species.tsne.plot ####
-            output$DE.species.tsne.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.tsne.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.tsne.result[[2]]
-              })
-            })
-            
-            #### Output: DE.species.tsne.table ####
-            output$DE.species.tsne.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.tsne.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.tsne.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.species.tsne.table <- renderDataTable
-            
-            
-          }else if(input$DE_species_dim_redu_method == 'umap'){
-            
-            if(input$DE_species_cluster_method == 'kmeans'){
-              
-              variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       n_neighbors=input$DE_species_umap_n_neighbors, 
-                                                       scale=input$DE_species_umap_scale,
-                                                       metric=input$DE_species_umap_metric,
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_kmeans_group)
-              
-            }else if(input$DE_species_cluster_method == 'kmedoids'){
-              
-              variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       n_neighbors=input$DE_species_umap_n_neighbors, 
-                                                       scale=input$DE_species_umap_scale,
-                                                       metric=input$DE_species_umap_metric,
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_pam_group, 
-                                                       var1 = input$DE_species_pam_metric)
-              
-            }else if(input$DE_species_cluster_method == 'hclustering'){
-              
-              variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       n_neighbors=input$DE_species_umap_n_neighbors, 
-                                                       scale=input$DE_species_umap_scale,
-                                                       metric=input$DE_species_umap_metric,
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_hclust_group, 
-                                                       var1 = input$DE_species_hclust_dist, 
-                                                       var2 = input$DE_species_hclust_hclust)
-              
-            }else if(input$DE_species_cluster_method == 'dbscan'){
-              
-              variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       n_neighbors=input$DE_species_umap_n_neighbors, 
-                                                       scale=input$DE_species_umap_scale,
-                                                       metric=input$DE_species_umap_metric, 
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       var1 = input$DE_species_dbscan_eps, 
-                                                       var2 = input$DE_species_dbscan_minPts)
-              
-            }else if(input$DE_species_cluster_method == 'group_info'){
-              
-              variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       n_neighbors=input$DE_species_umap_n_neighbors, 
-                                                       scale=input$DE_species_umap_scale,
-                                                       metric=input$DE_species_umap_metric,
-                                                       cluster_method=input$DE_species_cluster_method)
-              
-            }
-            
-            #### Output: DE.species.umap.plot ####
-            output$DE.species.umap.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.umap.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.umap.result[[2]]
-              })
-            })
-            
-            #### Output: DE.species.umap.table ####
-            output$DE.species.umap.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.umap.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.umap.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.species.umap.table <- renderDataTable
-            
-          }
           
-        }) #observeEvent(input$DE_species_dim_redu_method
+        }else if(input$DE_species_cluster_method == 'group_info'){
+          
+          variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
+                                                     ncomp = 2, 
+                                                     scaling = input$DE_species_plsda_scale,
+                                                     cluster_method = input$DE_species_cluster_method)
+          
+        }
         
-      }else if(input$DE_data_source == 'DE_user_data'){
+        #### Output: DE.species.plsda.sample.plot ####
+        output$DE.species.plsda.sample.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.plsda.result[[3]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.plsda.result[[3]]
+          })
+        })
         
-        observeEvent(input$DE_species_dim_redu_method,{
-          #### Function: PCA ####
-          if(input$DE_species_dim_redu_method == 'pca'){
+        #### Output: DE.species.plsda.variable.plot ####
+        output$DE.species.plsda.variable.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.plsda.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.plsda.result[[4]]
+          })
+        })
+        
+        #### Output: DE.species.plsda.variate.table ####
+        output$DE.species.plsda.variate.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.plsda.result[[1]]), "Table not showing. Missing value imputation is recommended."))
             
-            if(input$DE_species_cluster_method == 'kmeans'){
-              
-              variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                     scaling=input$DE_species_pca_scale, 
-                                                     centering=input$DE_species_pca_center, 
-                                                     cluster_method=input$DE_species_cluster_method, 
+            DT::datatable(variables$DE.species.plsda.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #DE.species.plsda.variate.table <- renderDataTable
+        
+        #### Output: DE.species.plsda.loading.table ####
+        output$DE.species.plsda.loading.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.plsda.result[[2]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.species.plsda.result[[2]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.species.plsda.loading.table <- renderDataTable
+        
+      }else if(input$DE_species_dim_redu_method == 'tsne'){
+        
+        if(input$DE_species_cluster_method == 'kmeans'){
+          
+          variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   pca=input$DE_species_tsne_pca, 
+                                                   perplexity=input$DE_species_tsne_perplexity,
+                                                   max_iter=input$DE_species_tsne_max_iter, 
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_kmeans_group)
+          
+        }else if(input$DE_species_cluster_method == 'kmedoids'){
+          
+          variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   pca=input$DE_species_tsne_pca, 
+                                                   perplexity=input$DE_species_tsne_perplexity,
+                                                   max_iter=input$DE_species_tsne_max_iter, 
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_pam_group, 
+                                                   var1 = input$DE_species_pam_metric)
+          
+        }else if(input$DE_species_cluster_method == 'hclustering'){
+          
+          variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   pca=input$DE_species_tsne_pca, 
+                                                   perplexity=input$DE_species_tsne_perplexity,
+                                                   max_iter=input$DE_species_tsne_max_iter, 
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_hclust_group, 
+                                                   var1 = input$DE_species_hclust_dist, 
+                                                   var2 = input$DE_species_hclust_hclust)
+          
+        }else if(input$DE_species_cluster_method == 'dbscan'){
+          
+          variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   pca=input$DE_species_tsne_pca, 
+                                                   perplexity=input$DE_species_tsne_perplexity,
+                                                   max_iter=input$DE_species_tsne_max_iter, 
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   var1 = input$DE_species_dbscan_eps, 
+                                                   var2 = input$DE_species_dbscan_minPts)
+          
+        }else if(input$DE_species_cluster_method == 'group_info'){
+          
+          variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   pca=input$DE_species_tsne_pca, 
+                                                   perplexity=input$DE_species_tsne_perplexity,
+                                                   max_iter=input$DE_species_tsne_max_iter, 
+                                                   cluster_method=input$DE_species_cluster_method)
+          
+        }
+        
+        #### Output: DE.species.tsne.plot ####
+        output$DE.species.tsne.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.tsne.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.tsne.result[[2]]
+          })
+        })
+        
+        #### Output: DE.species.tsne.table ####
+        output$DE.species.tsne.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.tsne.result[[1]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.species.tsne.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.species.tsne.table <- renderDataTable
+        
+        
+      }else if(input$DE_species_dim_redu_method == 'umap'){
+        
+        if(input$DE_species_cluster_method == 'kmeans'){
+          
+          variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   n_neighbors=input$DE_species_umap_n_neighbors, 
+                                                   scale=input$DE_species_umap_scale,
+                                                   metric=input$DE_species_umap_metric,
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_kmeans_group)
+          
+        }else if(input$DE_species_cluster_method == 'kmedoids'){
+          
+          variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   n_neighbors=input$DE_species_umap_n_neighbors, 
+                                                   scale=input$DE_species_umap_scale,
+                                                   metric=input$DE_species_umap_metric,
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_pam_group, 
+                                                   var1 = input$DE_species_pam_metric)
+          
+        }else if(input$DE_species_cluster_method == 'hclustering'){
+          
+          variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   n_neighbors=input$DE_species_umap_n_neighbors, 
+                                                   scale=input$DE_species_umap_scale,
+                                                   metric=input$DE_species_umap_metric,
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_hclust_group, 
+                                                   var1 = input$DE_species_hclust_dist, 
+                                                   var2 = input$DE_species_hclust_hclust)
+          
+        }else if(input$DE_species_cluster_method == 'dbscan'){
+          
+          variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   n_neighbors=input$DE_species_umap_n_neighbors, 
+                                                   scale=input$DE_species_umap_scale,
+                                                   metric=input$DE_species_umap_metric, 
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   var1 = input$DE_species_dbscan_eps, 
+                                                   var2 = input$DE_species_dbscan_minPts)
+          
+        }else if(input$DE_species_cluster_method == 'group_info'){
+          
+          variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   n_neighbors=input$DE_species_umap_n_neighbors, 
+                                                   scale=input$DE_species_umap_scale,
+                                                   metric=input$DE_species_umap_metric,
+                                                   cluster_method=input$DE_species_cluster_method)
+          
+        }
+        
+        #### Output: DE.species.umap.plot ####
+        output$DE.species.umap.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.umap.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.umap.result[[2]]
+          })
+        })
+        
+        #### Output: DE.species.umap.table ####
+        output$DE.species.umap.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.umap.result[[1]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.species.umap.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.species.umap.table <- renderDataTable
+        
+      }
+      
+    }) #observeEvent(input$DE_species_dim_redu_method
+    
+  }else if(input$DE_data_source == 'DE_user_data'){
+    
+    observeEvent(input$DE_species_dim_redu_method,{
+      if(input$DE_species_dim_redu_method == 'pca'){
+        feature_num_check=2
+        sample_num_check=6
+        shinyjs::hide('DE_species_dim_redu_result_div')
+      }else if(input$DE_species_dim_redu_method == 'plsda'){
+        feature_num_check=6
+        sample_num_check=6
+        shinyjs::hide('DE_species_dim_redu_result_div')
+      }else if(input$DE_species_dim_redu_method == 'tsne'){
+        feature_num_check=4
+        sample_num_check=2
+        shinyjs::hide('DE_species_dim_redu_result_div')
+      }else{
+        feature_num_check=2
+        sample_num_check=2
+        shinyjs::hide('DE_species_dim_redu_result_div')
+      }
+      
+      
+      if(submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_species_sig(),check_NA=T,feature_num=6,sample_num=sample_num_check,sig_count=2)[[1]]!=TRUE){
+        showModal(modalDialog(
+          title = "Important message",
+          submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_species_sig(),check_NA=T,feature_num=6,sample_num=sample_num_check,sig_count=2)[[2]],
+          easyClose = TRUE
+        ))
+      }else{
+        #### shinyjs show/hide results ####
+        shinyjs::show('DE_species_dim_redu_result_div')
+      }
+      
+      #### Function: PCA ####
+      if(input$DE_species_dim_redu_method == 'pca'){
+        
+        if(input$DE_species_cluster_method == 'kmeans'){
+          
+          variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                 scaling=input$DE_species_pca_scale, 
+                                                 centering=input$DE_species_pca_center, 
+                                                 cluster_method=input$DE_species_cluster_method, 
+                                                 group_num = input$DE_species_kmeans_group,
+                                                 insert_ref_group = NULL,
+                                                 ref_group = NULL)
+          
+        }else if(input$DE_species_cluster_method == 'kmedoids'){
+          
+          variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                 scaling=input$DE_species_pca_scale, 
+                                                 centering=input$DE_species_pca_center, 
+                                                 cluster_method=input$DE_species_cluster_method, 
+                                                 group_num = input$DE_species_pam_group, 
+                                                 var1 = input$DE_species_pam_metric,
+                                                 insert_ref_group = NULL,
+                                                 ref_group = NULL)
+          
+        }else if(input$DE_species_cluster_method == 'hclustering'){
+          
+          variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                 scaling=input$DE_species_pca_scale, 
+                                                 centering=input$DE_species_pca_center, 
+                                                 cluster_method=input$DE_species_cluster_method, 
+                                                 group_num = input$DE_species_hclust_group, 
+                                                 var1 = input$DE_species_hclust_dist, 
+                                                 var2 = input$DE_species_hclust_hclust,
+                                                 insert_ref_group = NULL,
+                                                 ref_group = NULL)
+          
+        }else if(input$DE_species_cluster_method == 'dbscan'){
+          
+          variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                 scaling=input$DE_species_pca_scale, 
+                                                 centering=input$DE_species_pca_center, 
+                                                 cluster_method=input$DE_species_cluster_method, 
+                                                 var1 = input$DE_species_dbscan_eps, 
+                                                 var2 = input$DE_species_dbscan_minPts,
+                                                 insert_ref_group = NULL,
+                                                 ref_group = NULL)
+          
+        }else if(input$DE_species_cluster_method == 'group_info'){
+          
+          variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                 scaling=input$DE_species_pca_scale, 
+                                                 centering=input$DE_species_pca_center, 
+                                                 cluster_method=input$DE_species_cluster_method,
+                                                 insert_ref_group = input$DE_user_ref_group,
+                                                 ref_group = variables$DE.group.ref.group)
+          
+        }
+        
+        #### Output: DE.species.pca.biplot ####
+        output$DE.species.pca.biplot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.pca.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.pca.result[[4]]
+          })
+        })
+        
+        #### Output: DE.species.pca.screeplot ####
+        output$DE.species.pca.screeplot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.pca.result[[5]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.pca.result[[5]]
+          })
+        })
+        
+        #### Output: DE.species.pca.rotated.data ####
+        output$DE.species.pca.rotated.data <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.pca.result[[2]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.species.pca.result[[2]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.species.pca.rotated.data <- renderDataTable
+        
+        #### Output: DE.species.pca.contrib.table ####
+        output$DE.species.pca.contrib.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.pca.result[[3]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.species.pca.result[[3]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.species.pca.contrib.table <- renderDataTable
+        
+      }else if(input$DE_species_dim_redu_method == 'plsda'){
+        
+        if(input$DE_species_cluster_method == 'kmeans'){
+          
+          variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
+                                                     ncomp = 2, 
+                                                     scaling = input$DE_species_plsda_scale,
+                                                     cluster_method = input$DE_species_cluster_method, 
                                                      group_num = input$DE_species_kmeans_group,
-                                                     insert_ref_group = NULL,
-                                                     ref_group = NULL)
-              
-            }else if(input$DE_species_cluster_method == 'kmedoids'){
-              
-              variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                     scaling=input$DE_species_pca_scale, 
-                                                     centering=input$DE_species_pca_center, 
-                                                     cluster_method=input$DE_species_cluster_method, 
+                                                     insert_ref_group = input$DE_user_ref_group,
+                                                     ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_species_cluster_method == 'kmedoids'){
+          
+          variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
+                                                     ncomp = 2, 
+                                                     scaling = input$DE_species_plsda_scale,
+                                                     cluster_method = input$DE_species_cluster_method, 
                                                      group_num = input$DE_species_pam_group, 
                                                      var1 = input$DE_species_pam_metric,
-                                                     insert_ref_group = NULL,
-                                                     ref_group = NULL)
-              
-            }else if(input$DE_species_cluster_method == 'hclustering'){
-              
-              variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                     scaling=input$DE_species_pca_scale, 
-                                                     centering=input$DE_species_pca_center, 
-                                                     cluster_method=input$DE_species_cluster_method, 
+                                                     insert_ref_group = input$DE_user_ref_group,
+                                                     ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_species_cluster_method == 'hclustering'){
+          
+          variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
+                                                     ncomp = 2, 
+                                                     scaling = input$DE_species_plsda_scale,
+                                                     cluster_method = input$DE_species_cluster_method, 
                                                      group_num = input$DE_species_hclust_group, 
                                                      var1 = input$DE_species_hclust_dist, 
                                                      var2 = input$DE_species_hclust_hclust,
-                                                     insert_ref_group = NULL,
-                                                     ref_group = NULL)
-              
-            }else if(input$DE_species_cluster_method == 'dbscan'){
-              
-              variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                     scaling=input$DE_species_pca_scale, 
-                                                     centering=input$DE_species_pca_center, 
-                                                     cluster_method=input$DE_species_cluster_method, 
-                                                     var1 = input$DE_species_dbscan_eps, 
-                                                     var2 = input$DE_species_dbscan_minPts,
-                                                     insert_ref_group = NULL,
-                                                     ref_group = NULL)
-              
-            }else if(input$DE_species_cluster_method == 'group_info'){
-              
-              variables$DE.species.pca.result <- PCA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                     scaling=input$DE_species_pca_scale, 
-                                                     centering=input$DE_species_pca_center, 
-                                                     cluster_method=input$DE_species_cluster_method,
                                                      insert_ref_group = input$DE_user_ref_group,
                                                      ref_group = variables$DE.group.ref.group)
-              
-            }
+          
+        }else if(input$DE_species_cluster_method == 'dbscan'){
+          
+          variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
+                                                     ncomp = 2, 
+                                                     scaling = input$DE_species_plsda_scale,
+                                                     cluster_method = input$DE_species_cluster_method, 
+                                                     var1 = input$DE_species_dbscan_eps, 
+                                                     var2 = input$DE_species_dbscan_minPts,
+                                                     insert_ref_group = input$DE_user_ref_group,
+                                                     ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_species_cluster_method == 'group_info'){
+          
+          variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
+                                                     ncomp = 2, 
+                                                     scaling = input$DE_species_plsda_scale,
+                                                     cluster_method = input$DE_species_cluster_method,
+                                                     insert_ref_group = input$DE_user_ref_group,
+                                                     ref_group = variables$DE.group.ref.group)
+          
+        }
+        
+        #### Output: DE.species.plsda.sample.plot ####
+        output$DE.species.plsda.sample.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.plsda.result[[3]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.plsda.result[[3]]
+          })
+        })
+        
+        #### Output: DE.species.plsda.variable.plot ####
+        output$DE.species.plsda.variable.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.plsda.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.plsda.result[[4]]
+          })
+        })
+        
+        #### Output: DE.species.plsda.variate.table ####
+        output$DE.species.plsda.variate.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.plsda.result[[1]]), "Table not showing. Missing value imputation is recommended."))
             
-            #### Output: DE.species.pca.biplot ####
-            output$DE.species.pca.biplot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.pca.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.pca.result[[4]]
-              })
-            })
+            DT::datatable(variables$DE.species.plsda.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #DE.species.plsda.variate.table <- renderDataTable
+        
+        #### Output: DE.species.plsda.loading.table ####
+        output$DE.species.plsda.loading.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.plsda.result[[2]]), "Table not showing. Missing value imputation is recommended."))
             
-            #### Output: DE.species.pca.screeplot ####
-            output$DE.species.pca.screeplot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.pca.result[[5]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.pca.result[[5]]
-              })
-            })
+            DT::datatable(variables$DE.species.plsda.result[[2]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.species.plsda.loading.table <- renderDataTable
+        
+      }else if(input$DE_species_dim_redu_method == 'tsne'){
+        
+        if(input$DE_species_cluster_method == 'kmeans'){
+          
+          variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   pca=input$DE_species_tsne_pca, 
+                                                   perplexity=input$DE_species_tsne_perplexity,
+                                                   max_iter=input$DE_species_tsne_max_iter, 
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_kmeans_group,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_species_cluster_method == 'kmedoids'){
+          
+          variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   pca=input$DE_species_tsne_pca, 
+                                                   perplexity=input$DE_species_tsne_perplexity,
+                                                   max_iter=input$DE_species_tsne_max_iter, 
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_pam_group, 
+                                                   var1 = input$DE_species_pam_metric,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_species_cluster_method == 'hclustering'){
+          
+          variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   pca=input$DE_species_tsne_pca, 
+                                                   perplexity=input$DE_species_tsne_perplexity,
+                                                   max_iter=input$DE_species_tsne_max_iter, 
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_hclust_group, 
+                                                   var1 = input$DE_species_hclust_dist, 
+                                                   var2 = input$DE_species_hclust_hclust,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_species_cluster_method == 'dbscan'){
+          
+          variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   pca=input$DE_species_tsne_pca, 
+                                                   perplexity=input$DE_species_tsne_perplexity,
+                                                   max_iter=input$DE_species_tsne_max_iter, 
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   var1 = input$DE_species_dbscan_eps, 
+                                                   var2 = input$DE_species_dbscan_minPts,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_species_cluster_method == 'group_info'){
+          
+          variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   pca=input$DE_species_tsne_pca, 
+                                                   perplexity=input$DE_species_tsne_perplexity,
+                                                   max_iter=input$DE_species_tsne_max_iter, 
+                                                   cluster_method=input$DE_species_cluster_method,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }
+        
+        #### Output: DE.species.tsne.plot ####
+        output$DE.species.tsne.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.tsne.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.tsne.result[[2]]
+          })
+        })
+        
+        #### Output: DE.species.tsne.table ####
+        output$DE.species.tsne.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.tsne.result[[1]]), "Table not showing. Missing value imputation is recommended."))
             
-            #### Output: DE.species.pca.rotated.data ####
-            output$DE.species.pca.rotated.data <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.pca.result[[2]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.pca.result[[2]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.species.pca.rotated.data <- renderDataTable
+            DT::datatable(variables$DE.species.tsne.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.species.tsne.table <- renderDataTable
+        
+        
+      }else if(input$DE_species_dim_redu_method == 'umap'){
+        
+        if(input$DE_species_cluster_method == 'kmeans'){
+          
+          variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   n_neighbors=input$DE_species_umap_n_neighbors, 
+                                                   scale=input$DE_species_umap_scale,
+                                                   metric=input$DE_species_umap_metric,
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_kmeans_group,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_species_cluster_method == 'kmedoids'){
+          
+          variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   n_neighbors=input$DE_species_umap_n_neighbors, 
+                                                   scale=input$DE_species_umap_scale,
+                                                   metric=input$DE_species_umap_metric,
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_pam_group, 
+                                                   var1 = input$DE_species_pam_metric,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_species_cluster_method == 'hclustering'){
+          
+          variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   n_neighbors=input$DE_species_umap_n_neighbors, 
+                                                   scale=input$DE_species_umap_scale,
+                                                   metric=input$DE_species_umap_metric,
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   group_num = input$DE_species_hclust_group, 
+                                                   var1 = input$DE_species_hclust_dist, 
+                                                   var2 = input$DE_species_hclust_hclust,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_species_cluster_method == 'dbscan'){
+          
+          variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   n_neighbors=input$DE_species_umap_n_neighbors, 
+                                                   scale=input$DE_species_umap_scale,
+                                                   metric=input$DE_species_umap_metric, 
+                                                   cluster_method=input$DE_species_cluster_method, 
+                                                   var1 = input$DE_species_dbscan_eps, 
+                                                   var2 = input$DE_species_dbscan_minPts,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_species_cluster_method == 'group_info'){
+          
+          variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
+                                                   n_neighbors=input$DE_species_umap_n_neighbors, 
+                                                   scale=input$DE_species_umap_scale,
+                                                   metric=input$DE_species_umap_metric,
+                                                   cluster_method=input$DE_species_cluster_method,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }
+        
+        #### Output: DE.species.umap.plot ####
+        output$DE.species.umap.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.species.umap.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.species.umap.result[[2]]
+          })
+        })
+        
+        #### Output: DE.species.umap.table ####
+        output$DE.species.umap.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.species.umap.result[[1]]), "Table not showing. Missing value imputation is recommended."))
             
-            #### Output: DE.species.pca.contrib.table ####
-            output$DE.species.pca.contrib.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.pca.result[[3]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.pca.result[[3]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.species.pca.contrib.table <- renderDataTable
-            
-          }else if(input$DE_species_dim_redu_method == 'plsda'){
-            
-            if(input$DE_species_cluster_method == 'kmeans'){
-              
-              variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
-                                                         ncomp = 2, 
-                                                         scaling = input$DE_species_plsda_scale,
-                                                         cluster_method = input$DE_species_cluster_method, 
-                                                         group_num = input$DE_species_kmeans_group,
-                                                         insert_ref_group = input$DE_user_ref_group,
-                                                         ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'kmedoids'){
-              
-              variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
-                                                         ncomp = 2, 
-                                                         scaling = input$DE_species_plsda_scale,
-                                                         cluster_method = input$DE_species_cluster_method, 
-                                                         group_num = input$DE_species_pam_group, 
-                                                         var1 = input$DE_species_pam_metric,
-                                                         insert_ref_group = input$DE_user_ref_group,
-                                                         ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'hclustering'){
-              
-              variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
-                                                         ncomp = 2, 
-                                                         scaling = input$DE_species_plsda_scale,
-                                                         cluster_method = input$DE_species_cluster_method, 
-                                                         group_num = input$DE_species_hclust_group, 
-                                                         var1 = input$DE_species_hclust_dist, 
-                                                         var2 = input$DE_species_hclust_hclust,
-                                                         insert_ref_group = input$DE_user_ref_group,
-                                                         ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'dbscan'){
-              
-              variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
-                                                         ncomp = 2, 
-                                                         scaling = input$DE_species_plsda_scale,
-                                                         cluster_method = input$DE_species_cluster_method, 
-                                                         var1 = input$DE_species_dbscan_eps, 
-                                                         var2 = input$DE_species_dbscan_minPts,
-                                                         insert_ref_group = input$DE_user_ref_group,
-                                                         ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'group_info'){
-              
-              variables$DE.species.plsda.result <- PLSDA(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature, 
-                                                         ncomp = 2, 
-                                                         scaling = input$DE_species_plsda_scale,
-                                                         cluster_method = input$DE_species_cluster_method,
-                                                         insert_ref_group = input$DE_user_ref_group,
-                                                         ref_group = variables$DE.group.ref.group)
-              
-            }
-            
-            #### Output: DE.species.plsda.sample.plot ####
-            output$DE.species.plsda.sample.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.plsda.result[[3]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.plsda.result[[3]]
-              })
-            })
-            
-            #### Output: DE.species.plsda.variable.plot ####
-            output$DE.species.plsda.variable.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.plsda.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.plsda.result[[4]]
-              })
-            })
-            
-            #### Output: DE.species.plsda.variate.table ####
-            output$DE.species.plsda.variate.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.plsda.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.plsda.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #DE.species.plsda.variate.table <- renderDataTable
-            
-            #### Output: DE.species.plsda.loading.table ####
-            output$DE.species.plsda.loading.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.plsda.result[[2]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.plsda.result[[2]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.species.plsda.loading.table <- renderDataTable
-            
-          }else if(input$DE_species_dim_redu_method == 'tsne'){
-            
-            if(input$DE_species_cluster_method == 'kmeans'){
-              
-              variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       pca=input$DE_species_tsne_pca, 
-                                                       perplexity=input$DE_species_tsne_perplexity,
-                                                       max_iter=input$DE_species_tsne_max_iter, 
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_kmeans_group,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'kmedoids'){
-              
-              variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       pca=input$DE_species_tsne_pca, 
-                                                       perplexity=input$DE_species_tsne_perplexity,
-                                                       max_iter=input$DE_species_tsne_max_iter, 
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_pam_group, 
-                                                       var1 = input$DE_species_pam_metric,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'hclustering'){
-              
-              variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       pca=input$DE_species_tsne_pca, 
-                                                       perplexity=input$DE_species_tsne_perplexity,
-                                                       max_iter=input$DE_species_tsne_max_iter, 
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_hclust_group, 
-                                                       var1 = input$DE_species_hclust_dist, 
-                                                       var2 = input$DE_species_hclust_hclust,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'dbscan'){
-              
-              variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       pca=input$DE_species_tsne_pca, 
-                                                       perplexity=input$DE_species_tsne_perplexity,
-                                                       max_iter=input$DE_species_tsne_max_iter, 
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       var1 = input$DE_species_dbscan_eps, 
-                                                       var2 = input$DE_species_dbscan_minPts,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'group_info'){
-              
-              variables$DE.species.tsne.result <- tsne(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       pca=input$DE_species_tsne_pca, 
-                                                       perplexity=input$DE_species_tsne_perplexity,
-                                                       max_iter=input$DE_species_tsne_max_iter, 
-                                                       cluster_method=input$DE_species_cluster_method,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }
-            
-            #### Output: DE.species.tsne.plot ####
-            output$DE.species.tsne.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.tsne.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.tsne.result[[2]]
-              })
-            })
-            
-            #### Output: DE.species.tsne.table ####
-            output$DE.species.tsne.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.tsne.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.tsne.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.species.tsne.table <- renderDataTable
-            
-            
-          }else if(input$DE_species_dim_redu_method == 'umap'){
-            
-            if(input$DE_species_cluster_method == 'kmeans'){
-              
-              variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       n_neighbors=input$DE_species_umap_n_neighbors, 
-                                                       scale=input$DE_species_umap_scale,
-                                                       metric=input$DE_species_umap_metric,
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_kmeans_group,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'kmedoids'){
-              
-              variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       n_neighbors=input$DE_species_umap_n_neighbors, 
-                                                       scale=input$DE_species_umap_scale,
-                                                       metric=input$DE_species_umap_metric,
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_pam_group, 
-                                                       var1 = input$DE_species_pam_metric,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'hclustering'){
-              
-              variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       n_neighbors=input$DE_species_umap_n_neighbors, 
-                                                       scale=input$DE_species_umap_scale,
-                                                       metric=input$DE_species_umap_metric,
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       group_num = input$DE_species_hclust_group, 
-                                                       var1 = input$DE_species_hclust_dist, 
-                                                       var2 = input$DE_species_hclust_hclust,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'dbscan'){
-              
-              variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       n_neighbors=input$DE_species_umap_n_neighbors, 
-                                                       scale=input$DE_species_umap_scale,
-                                                       metric=input$DE_species_umap_metric, 
-                                                       cluster_method=input$DE_species_cluster_method, 
-                                                       var1 = input$DE_species_dbscan_eps, 
-                                                       var2 = input$DE_species_dbscan_minPts,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_species_cluster_method == 'group_info'){
-              
-              variables$DE.species.umap.result <- UMAP(DE_exp_transform_data(), DE_group_info(), DE_species_sig()$feature,
-                                                       n_neighbors=input$DE_species_umap_n_neighbors, 
-                                                       scale=input$DE_species_umap_scale,
-                                                       metric=input$DE_species_umap_metric,
-                                                       cluster_method=input$DE_species_cluster_method,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }
-            
-            #### Output: DE.species.umap.plot ####
-            output$DE.species.umap.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.species.umap.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.species.umap.result[[2]]
-              })
-            })
-            
-            #### Output: DE.species.umap.table ####
-            output$DE.species.umap.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.species.umap.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.species.umap.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.species.umap.table <- renderDataTable
-            
-          }
-        }) #observeEvent(input$DE_species_dim_redu_method
+            DT::datatable(variables$DE.species.umap.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.species.umap.table <- renderDataTable
         
       }
-    #}) #isolate
+    }) #observeEvent(input$DE_species_dim_redu_method
+    
   }
   
 })
@@ -2403,7 +2541,7 @@ observeEvent(input$DE_species_enrichment_start, {
           
           validate(need(!is.null(DE_enrich_char()), "Without enrichment result"))
           
-          DT::datatable(DE_enrich_char()[-5],
+          DT::datatable(DE_enrich_char()[-5] %>% mutate_if(is.numeric, ~round(., 5)),
                         #caption = 'Lipid expression data',
                         colnames = c('condition', input$DE_species_enrichment_lipid_char, 'significant lipids', 'total lipids', '-log10(p-value)', 'significance'),
                         escape = FALSE, selection = 'none', rownames = TRUE, 
@@ -2431,6 +2569,7 @@ observeEvent(input$DE_species_enrichment_start, {
   }
   
 }) #observeEvent(input$DE_species_enrichment_start
+shinyjs::hide('DE_species_enrichment_pathview_result_div')
 
 #### control pathview start button ####
 observeEvent(input$DE_species_enrichment_pathview, {
@@ -2716,7 +2855,7 @@ observeEvent(input$DE_class_analysis_start, {
           DT::datatable(variables$DE.char.2$DE_char_table_all %>%
                           mutate(sig_FC = ifelse(abs(log2FC)>log2(input$DE_class_fc),'yes','no')) %>%
                           dplyr::select(sig_FC, 1:3, 5:10, 4, 11) %>%
-                          arrange(desc(sig_FC)),
+                          arrange(desc(sig_FC)) ,
                         #caption = 'Lipid expression data',
                         colnames = c('Significance(Fold change)', input$DE_class_analysis_char, 'method', 'anova p-value', 'mean(ctrl)', 
                                      'sd(ctrl)', 'mean(exp)', 'sd(exp)', 'FC', 'log2(FC)', 'post hoc test', 'post hoc p-value'),
@@ -3027,881 +3166,929 @@ observeEvent(input$DE_class_dim_redu_reset,{
   
 }) #observeEvent(input$DE_class_dim_redu_reset
 
+shinyjs::hide('DE_class_dim_redu_result_div')
 #### control start button ####
 observeEvent(input$DE_class_dim_redu_start,{
-  if(submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_class_sig(),check_NA=T,feature_num=6,sig_count=2)[[1]]!=TRUE){
-    showModal(modalDialog(
-      title = "Important message",
-      submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_class_sig(),check_NA=T,feature_num=6,sig_count=2)[[2]],
-      easyClose = TRUE
-    ))
-  }else{
-    #### shinyjs show/hide results ####
-    shinyjs::show('DE_class_dim_redu_result_div')
-    
-    #isolate({
-      if(input$DE_data_source == 'DE_demo_data'){
-        observeEvent(input$DE_class_dim_redu_method,{
-          #### Function: PCA ####
-          if(input$DE_class_dim_redu_method == 'pca'){
+  
+  if(input$DE_data_source == 'DE_demo_data'){
+    observeEvent(input$DE_class_dim_redu_method,{
+      if(input$DE_class_dim_redu_method == 'pca'){
+        feature_num_check=2
+        sample_num_check=6
+        shinyjs::hide('DE_class_dim_redu_result_div')
+      }else if(input$DE_class_dim_redu_method == 'plsda'){
+        feature_num_check=6
+        sample_num_check=6
+        shinyjs::hide('DE_class_dim_redu_result_div')
+      }else if(input$DE_class_dim_redu_method == 'tsne'){
+        feature_num_check=4
+        sample_num_check=2
+        shinyjs::hide('DE_class_dim_redu_result_div')
+      }else{
+        feature_num_check=2
+        sample_num_check=2
+        shinyjs::hide('DE_class_dim_redu_result_div')
+      }
+      
+      
+      if(submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_class_sig(),check_NA=T,feature_num=6,sample_num=sample_num_check,sig_count=2)[[1]]!=TRUE){
+        showModal(modalDialog(
+          title = "Important message",
+          submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_class_sig(),check_NA=T,feature_num=6,sample_num=sample_num_check,sig_count=2)[[2]],
+          easyClose = TRUE
+        ))
+      }else{
+        #### shinyjs show/hide results ####
+        shinyjs::show('DE_class_dim_redu_result_div')
+        
+      }
+      #### Function: PCA ####
+      if(input$DE_class_dim_redu_method == 'pca'){
+        
+        if(input$DE_class_cluster_method == 'kmeans'){
+          
+          variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                               scaling=input$DE_class_pca_scale,
+                                               centering=input$DE_class_pca_center,
+                                               cluster_method=input$DE_class_cluster_method,
+                                               group_num = input$DE_class_kmeans_group)
+          
+        }else if(input$DE_class_cluster_method == 'kmedoids'){
+          
+          variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                               scaling=input$DE_class_pca_scale,
+                                               centering=input$DE_class_pca_center,
+                                               cluster_method=input$DE_class_cluster_method,
+                                               group_num = input$DE_class_pam_group,
+                                               var1 = input$DE_class_pam_metric)
+          
+        }else if(input$DE_class_cluster_method == 'hclustering'){
+          
+          variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                               scaling=input$DE_class_pca_scale,
+                                               centering=input$DE_class_pca_center,
+                                               cluster_method=input$DE_class_cluster_method,
+                                               group_num = input$DE_class_hclust_group,
+                                               var1 = input$DE_class_hclust_dist,
+                                               var2 = input$DE_class_hclust_hclust)
+          
+        }else if(input$DE_class_cluster_method == 'dbscan'){
+          
+          variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                               scaling=input$DE_class_pca_scale,
+                                               centering=input$DE_class_pca_center,
+                                               cluster_method=input$DE_class_cluster_method,
+                                               var1 = input$DE_class_dbscan_eps,
+                                               var2 = input$DE_class_dbscan_minPts)
+          
+        }else if(input$DE_class_cluster_method == 'group_info'){
+          
+          variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                               scaling=input$DE_class_pca_scale,
+                                               centering=input$DE_class_pca_center,
+                                               cluster_method=input$DE_class_cluster_method)
+          
+        }
+        
+        #### Output: DE.class.pca.biplot ####
+        output$DE.class.pca.biplot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.pca.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.pca.result[[4]]
+          })
+        })
+        
+        #### Output: DE.class.pca.screeplot ####
+        output$DE.class.pca.screeplot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.pca.result[[5]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.pca.result[[5]]
+          })
+        })
+        
+        #### Output: DE.class.pca.rotated.data ####
+        output$DE.class.pca.rotated.data <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.pca.result[[2]]), "Table not showing. Missing value imputation is recommended."))
             
-            if(input$DE_class_cluster_method == 'kmeans'){
-              
-              variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                   scaling=input$DE_class_pca_scale,
-                                                   centering=input$DE_class_pca_center,
-                                                   cluster_method=input$DE_class_cluster_method,
+            DT::datatable(variables$DE.class.pca.result[[2]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.class.pca.rotated.data <- renderDataTable
+        
+        #### Output: DE.class.pca.contrib.table ####
+        output$DE.class.pca.contrib.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.pca.result[[3]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.class.pca.result[[3]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.class.pca.contrib.table <- renderDataTable
+        
+      }else if(input$DE_class_dim_redu_method == 'plsda'){
+        
+        if(input$DE_class_cluster_method == 'kmeans'){
+          
+          variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                   ncomp = 2,
+                                                   scaling = input$DE_class_plsda_scale,
+                                                   cluster_method = input$DE_class_cluster_method,
                                                    group_num = input$DE_class_kmeans_group)
-              
-            }else if(input$DE_class_cluster_method == 'kmedoids'){
-              
-              variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                   scaling=input$DE_class_pca_scale,
-                                                   centering=input$DE_class_pca_center,
-                                                   cluster_method=input$DE_class_cluster_method,
+          
+        }else if(input$DE_class_cluster_method == 'kmedoids'){
+          
+          variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                   ncomp = 2,
+                                                   scaling = input$DE_class_plsda_scale,
+                                                   cluster_method = input$DE_class_cluster_method,
                                                    group_num = input$DE_class_pam_group,
                                                    var1 = input$DE_class_pam_metric)
-              
-            }else if(input$DE_class_cluster_method == 'hclustering'){
-              
-              variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                   scaling=input$DE_class_pca_scale,
-                                                   centering=input$DE_class_pca_center,
-                                                   cluster_method=input$DE_class_cluster_method,
+          
+        }else if(input$DE_class_cluster_method == 'hclustering'){
+          
+          variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                   ncomp = 2,
+                                                   scaling = input$DE_class_plsda_scale,
+                                                   cluster_method = input$DE_class_cluster_method,
                                                    group_num = input$DE_class_hclust_group,
                                                    var1 = input$DE_class_hclust_dist,
                                                    var2 = input$DE_class_hclust_hclust)
-              
-            }else if(input$DE_class_cluster_method == 'dbscan'){
-              
-              variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                   scaling=input$DE_class_pca_scale,
-                                                   centering=input$DE_class_pca_center,
-                                                   cluster_method=input$DE_class_cluster_method,
+          
+        }else if(input$DE_class_cluster_method == 'dbscan'){
+          
+          variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                   ncomp = 2,
+                                                   scaling = input$DE_class_plsda_scale,
+                                                   cluster_method = input$DE_class_cluster_method,
                                                    var1 = input$DE_class_dbscan_eps,
                                                    var2 = input$DE_class_dbscan_minPts)
-              
-            }else if(input$DE_class_cluster_method == 'group_info'){
-              
-              variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                   scaling=input$DE_class_pca_scale,
-                                                   centering=input$DE_class_pca_center,
-                                                   cluster_method=input$DE_class_cluster_method)
-              
-            }
-            
-            #### Output: DE.class.pca.biplot ####
-            output$DE.class.pca.biplot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.pca.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.pca.result[[4]]
-              })
-            })
-            
-            #### Output: DE.class.pca.screeplot ####
-            output$DE.class.pca.screeplot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.pca.result[[5]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.pca.result[[5]]
-              })
-            })
-            
-            #### Output: DE.class.pca.rotated.data ####
-            output$DE.class.pca.rotated.data <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.pca.result[[2]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.pca.result[[2]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.class.pca.rotated.data <- renderDataTable
-            
-            #### Output: DE.class.pca.contrib.table ####
-            output$DE.class.pca.contrib.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.pca.result[[3]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.pca.result[[3]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.class.pca.contrib.table <- renderDataTable
-            
-          }else if(input$DE_class_dim_redu_method == 'plsda'){
-            
-            if(input$DE_class_cluster_method == 'kmeans'){
-              
-              variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                       ncomp = 2,
-                                                       scaling = input$DE_class_plsda_scale,
-                                                       cluster_method = input$DE_class_cluster_method,
-                                                       group_num = input$DE_class_kmeans_group)
-              
-            }else if(input$DE_class_cluster_method == 'kmedoids'){
-              
-              variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                       ncomp = 2,
-                                                       scaling = input$DE_class_plsda_scale,
-                                                       cluster_method = input$DE_class_cluster_method,
-                                                       group_num = input$DE_class_pam_group,
-                                                       var1 = input$DE_class_pam_metric)
-              
-            }else if(input$DE_class_cluster_method == 'hclustering'){
-              
-              variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                       ncomp = 2,
-                                                       scaling = input$DE_class_plsda_scale,
-                                                       cluster_method = input$DE_class_cluster_method,
-                                                       group_num = input$DE_class_hclust_group,
-                                                       var1 = input$DE_class_hclust_dist,
-                                                       var2 = input$DE_class_hclust_hclust)
-              
-            }else if(input$DE_class_cluster_method == 'dbscan'){
-              
-              variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                       ncomp = 2,
-                                                       scaling = input$DE_class_plsda_scale,
-                                                       cluster_method = input$DE_class_cluster_method,
-                                                       var1 = input$DE_class_dbscan_eps,
-                                                       var2 = input$DE_class_dbscan_minPts)
-              
-            }else if(input$DE_class_cluster_method == 'group_info'){
-              
-              variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                       ncomp = 2,
-                                                       scaling = input$DE_class_plsda_scale,
-                                                       cluster_method = input$DE_class_cluster_method)
-              
-            }
-            
-            #### Output: DE.class.plsda.sample.plot ####
-            output$DE.class.plsda.sample.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.plsda.result[[3]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.plsda.result[[3]]
-              })
-            })
-            
-            #### Output: DE.class.plsda.variable.plot ####
-            output$DE.class.plsda.variable.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.plsda.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.plsda.result[[4]]
-              })
-            })
-            
-            #### Output: DE.class.plsda.variate.table ####
-            output$DE.class.plsda.variate.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.plsda.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.plsda.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #DE.class.plsda.variate.table <- renderDataTable
-            
-            #### Output: DE.class.plsda.loading.table ####
-            output$DE.class.plsda.loading.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.plsda.result[[2]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.plsda.result[[2]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.class.plsda.loading.table <- renderDataTable
-            
-          }else if(input$DE_class_dim_redu_method == 'tsne'){
-            
-            if(input$DE_class_cluster_method == 'kmeans'){
-              
-              variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     pca=input$DE_class_tsne_pca,
-                                                     perplexity=input$DE_class_tsne_perplexity,
-                                                     max_iter=input$DE_class_tsne_max_iter,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_kmeans_group)
-              
-            }else if(input$DE_class_cluster_method == 'kmedoids'){
-              
-              variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     pca=input$DE_class_tsne_pca,
-                                                     perplexity=input$DE_class_tsne_perplexity,
-                                                     max_iter=input$DE_class_tsne_max_iter,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_pam_group,
-                                                     var1 = input$DE_class_pam_metric)
-              
-            }else if(input$DE_class_cluster_method == 'hclustering'){
-              
-              variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     pca=input$DE_class_tsne_pca,
-                                                     perplexity=input$DE_class_tsne_perplexity,
-                                                     max_iter=input$DE_class_tsne_max_iter,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_hclust_group,
-                                                     var1 = input$DE_class_hclust_dist,
-                                                     var2 = input$DE_class_hclust_hclust)
-              
-            }else if(input$DE_class_cluster_method == 'dbscan'){
-              
-              variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     pca=input$DE_class_tsne_pca,
-                                                     perplexity=input$DE_class_tsne_perplexity,
-                                                     max_iter=input$DE_class_tsne_max_iter,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     var1 = input$DE_class_dbscan_eps,
-                                                     var2 = input$DE_class_dbscan_minPts)
-              
-            }else if(input$DE_class_cluster_method == 'group_info'){
-              
-              variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     pca=input$DE_class_tsne_pca,
-                                                     perplexity=input$DE_class_tsne_perplexity,
-                                                     max_iter=input$DE_class_tsne_max_iter,
-                                                     cluster_method=input$DE_class_cluster_method)
-              
-            }
-            
-            #### Output: DE.class.tsne.plot ####
-            output$DE.class.tsne.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.tsne.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.tsne.result[[2]]
-              })
-            })
-            
-            #### Output: DE.class.tsne.table ####
-            output$DE.class.tsne.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.tsne.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.tsne.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.class.tsne.table <- renderDataTable
-            
-            
-          }else if(input$DE_class_dim_redu_method == 'umap'){
-            
-            if(input$DE_class_cluster_method == 'kmeans'){
-              
-              variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     n_neighbors=input$DE_class_umap_n_neighbors,
-                                                     scale=input$DE_class_umap_scale,
-                                                     metric=input$DE_class_umap_metric,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_kmeans_group)
-              
-            }else if(input$DE_class_cluster_method == 'kmedoids'){
-              
-              variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     n_neighbors=input$DE_class_umap_n_neighbors,
-                                                     scale=input$DE_class_umap_scale,
-                                                     metric=input$DE_class_umap_metric,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_pam_group,
-                                                     var1 = input$DE_class_pam_metric)
-              
-            }else if(input$DE_class_cluster_method == 'hclustering'){
-              
-              variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     n_neighbors=input$DE_class_umap_n_neighbors,
-                                                     scale=input$DE_class_umap_scale,
-                                                     metric=input$DE_class_umap_metric,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_hclust_group,
-                                                     var1 = input$DE_class_hclust_dist,
-                                                     var2 = input$DE_class_hclust_hclust)
-              
-            }else if(input$DE_class_cluster_method == 'dbscan'){
-              
-              variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     n_neighbors=input$DE_class_umap_n_neighbors,
-                                                     scale=input$DE_class_umap_scale,
-                                                     metric=input$DE_class_umap_metric,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     var1 = input$DE_class_dbscan_eps,
-                                                     var2 = input$DE_class_dbscan_minPts)
-              
-            }else if(input$DE_class_cluster_method == 'group_info'){
-              
-              variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     n_neighbors=input$DE_class_umap_n_neighbors,
-                                                     scale=input$DE_class_umap_scale,
-                                                     metric=input$DE_class_umap_metric,
-                                                     cluster_method=input$DE_class_cluster_method)
-              
-            }
-            
-            #### Output: DE.class.umap.plot ####
-            output$DE.class.umap.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.umap.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.umap.result[[2]]
-              })
-            })
-            
-            #### Output: DE.class.umap.table ####
-            output$DE.class.umap.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.umap.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.umap.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.class.umap.table <- renderDataTable
-            
-          }
-        }) #observeEvent(input$DE_class_dim_redu_method
+          
+        }else if(input$DE_class_cluster_method == 'group_info'){
+          
+          variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                   ncomp = 2,
+                                                   scaling = input$DE_class_plsda_scale,
+                                                   cluster_method = input$DE_class_cluster_method)
+          
+        }
         
-      }else if(input$DE_data_source == 'DE_user_data'){
-        observeEvent(input$DE_class_dim_redu_method,{
-          #### Function: PCA ####
-          if(input$DE_class_dim_redu_method == 'pca'){
+        #### Output: DE.class.plsda.sample.plot ####
+        output$DE.class.plsda.sample.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.plsda.result[[3]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.plsda.result[[3]]
+          })
+        })
+        
+        #### Output: DE.class.plsda.variable.plot ####
+        output$DE.class.plsda.variable.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.plsda.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.plsda.result[[4]]
+          })
+        })
+        
+        #### Output: DE.class.plsda.variate.table ####
+        output$DE.class.plsda.variate.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.plsda.result[[1]]), "Table not showing. Missing value imputation is recommended."))
             
-            if(input$DE_class_cluster_method == 'kmeans'){
-              
-              variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                   scaling=input$DE_class_pca_scale,
-                                                   centering=input$DE_class_pca_center,
-                                                   cluster_method=input$DE_class_cluster_method,
+            DT::datatable(variables$DE.class.plsda.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #DE.class.plsda.variate.table <- renderDataTable
+        
+        #### Output: DE.class.plsda.loading.table ####
+        output$DE.class.plsda.loading.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.plsda.result[[2]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.class.plsda.result[[2]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.class.plsda.loading.table <- renderDataTable
+        
+      }else if(input$DE_class_dim_redu_method == 'tsne'){
+        
+        if(input$DE_class_cluster_method == 'kmeans'){
+          
+          variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 pca=input$DE_class_tsne_pca,
+                                                 perplexity=input$DE_class_tsne_perplexity,
+                                                 max_iter=input$DE_class_tsne_max_iter,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_kmeans_group)
+          
+        }else if(input$DE_class_cluster_method == 'kmedoids'){
+          
+          variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 pca=input$DE_class_tsne_pca,
+                                                 perplexity=input$DE_class_tsne_perplexity,
+                                                 max_iter=input$DE_class_tsne_max_iter,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_pam_group,
+                                                 var1 = input$DE_class_pam_metric)
+          
+        }else if(input$DE_class_cluster_method == 'hclustering'){
+          
+          variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 pca=input$DE_class_tsne_pca,
+                                                 perplexity=input$DE_class_tsne_perplexity,
+                                                 max_iter=input$DE_class_tsne_max_iter,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_hclust_group,
+                                                 var1 = input$DE_class_hclust_dist,
+                                                 var2 = input$DE_class_hclust_hclust)
+          
+        }else if(input$DE_class_cluster_method == 'dbscan'){
+          
+          variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 pca=input$DE_class_tsne_pca,
+                                                 perplexity=input$DE_class_tsne_perplexity,
+                                                 max_iter=input$DE_class_tsne_max_iter,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 var1 = input$DE_class_dbscan_eps,
+                                                 var2 = input$DE_class_dbscan_minPts)
+          
+        }else if(input$DE_class_cluster_method == 'group_info'){
+          
+          variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 pca=input$DE_class_tsne_pca,
+                                                 perplexity=input$DE_class_tsne_perplexity,
+                                                 max_iter=input$DE_class_tsne_max_iter,
+                                                 cluster_method=input$DE_class_cluster_method)
+          
+        }
+        
+        #### Output: DE.class.tsne.plot ####
+        output$DE.class.tsne.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.tsne.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.tsne.result[[2]]
+          })
+        })
+        
+        #### Output: DE.class.tsne.table ####
+        output$DE.class.tsne.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.tsne.result[[1]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.class.tsne.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.class.tsne.table <- renderDataTable
+        
+        
+      }else if(input$DE_class_dim_redu_method == 'umap'){
+        
+        if(input$DE_class_cluster_method == 'kmeans'){
+          
+          variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 n_neighbors=input$DE_class_umap_n_neighbors,
+                                                 scale=input$DE_class_umap_scale,
+                                                 metric=input$DE_class_umap_metric,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_kmeans_group)
+          
+        }else if(input$DE_class_cluster_method == 'kmedoids'){
+          
+          variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 n_neighbors=input$DE_class_umap_n_neighbors,
+                                                 scale=input$DE_class_umap_scale,
+                                                 metric=input$DE_class_umap_metric,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_pam_group,
+                                                 var1 = input$DE_class_pam_metric)
+          
+        }else if(input$DE_class_cluster_method == 'hclustering'){
+          
+          variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 n_neighbors=input$DE_class_umap_n_neighbors,
+                                                 scale=input$DE_class_umap_scale,
+                                                 metric=input$DE_class_umap_metric,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_hclust_group,
+                                                 var1 = input$DE_class_hclust_dist,
+                                                 var2 = input$DE_class_hclust_hclust)
+          
+        }else if(input$DE_class_cluster_method == 'dbscan'){
+          
+          variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 n_neighbors=input$DE_class_umap_n_neighbors,
+                                                 scale=input$DE_class_umap_scale,
+                                                 metric=input$DE_class_umap_metric,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 var1 = input$DE_class_dbscan_eps,
+                                                 var2 = input$DE_class_dbscan_minPts)
+          
+        }else if(input$DE_class_cluster_method == 'group_info'){
+          
+          variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 n_neighbors=input$DE_class_umap_n_neighbors,
+                                                 scale=input$DE_class_umap_scale,
+                                                 metric=input$DE_class_umap_metric,
+                                                 cluster_method=input$DE_class_cluster_method)
+          
+        }
+        
+        #### Output: DE.class.umap.plot ####
+        output$DE.class.umap.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.umap.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.umap.result[[2]]
+          })
+        })
+        
+        #### Output: DE.class.umap.table ####
+        output$DE.class.umap.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.umap.result[[1]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.class.umap.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.class.umap.table <- renderDataTable
+        
+      }
+    }) #observeEvent(input$DE_class_dim_redu_method
+    
+  }else if(input$DE_data_source == 'DE_user_data'){
+    observeEvent(input$DE_class_dim_redu_method,{
+      if(input$DE_class_dim_redu_method == 'pca'){
+        feature_num_check=2
+        sample_num_check=6
+        shinyjs::hide('DE_class_dim_redu_result_div')
+      }else if(input$DE_class_dim_redu_method == 'plsda'){
+        feature_num_check=6
+        sample_num_check=6
+        shinyjs::hide('DE_class_dim_redu_result_div')
+      }else if(input$DE_class_dim_redu_method == 'tsne'){
+        feature_num_check=4
+        sample_num_check=2
+        shinyjs::hide('DE_class_dim_redu_result_div')
+      }else{
+        feature_num_check=2
+        sample_num_check=2
+        shinyjs::hide('DE_class_dim_redu_result_div')
+      }
+      
+      
+      if(submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_class_sig(),check_NA=T,feature_num=6,sample_num=sample_num_check,sig_count=2)[[1]]!=TRUE){
+        showModal(modalDialog(
+          title = "Important message",
+          submit_check(transform_data=DE_exp_transform_data(),sig_data=DE_class_sig(),check_NA=T,feature_num=6,sample_num=sample_num_check,sig_count=2)[[2]],
+          easyClose = TRUE
+        ))
+      }else{
+        #### shinyjs show/hide results ####
+        shinyjs::show('DE_class_dim_redu_result_div')
+        
+      }
+      #### Function: PCA ####
+      if(input$DE_class_dim_redu_method == 'pca'){
+        
+        if(input$DE_class_cluster_method == 'kmeans'){
+          
+          variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                               scaling=input$DE_class_pca_scale,
+                                               centering=input$DE_class_pca_center,
+                                               cluster_method=input$DE_class_cluster_method,
+                                               group_num = input$DE_class_kmeans_group,
+                                               insert_ref_group = NULL,
+                                               ref_group = NULL)
+          
+        }else if(input$DE_class_cluster_method == 'kmedoids'){
+          
+          variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                               scaling=input$DE_class_pca_scale,
+                                               centering=input$DE_class_pca_center,
+                                               cluster_method=input$DE_class_cluster_method,
+                                               group_num = input$DE_class_pam_group,
+                                               var1 = input$DE_class_pam_metric,
+                                               insert_ref_group = NULL,
+                                               ref_group = NULL)
+          
+        }else if(input$DE_class_cluster_method == 'hclustering'){
+          
+          variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                               scaling=input$DE_class_pca_scale,
+                                               centering=input$DE_class_pca_center,
+                                               cluster_method=input$DE_class_cluster_method,
+                                               group_num = input$DE_class_hclust_group,
+                                               var1 = input$DE_class_hclust_dist,
+                                               var2 = input$DE_class_hclust_hclust,
+                                               insert_ref_group = NULL,
+                                               ref_group = NULL)
+          
+        }else if(input$DE_class_cluster_method == 'dbscan'){
+          
+          variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                               scaling=input$DE_class_pca_scale,
+                                               centering=input$DE_class_pca_center,
+                                               cluster_method=input$DE_class_cluster_method,
+                                               var1 = input$DE_class_dbscan_eps,
+                                               var2 = input$DE_class_dbscan_minPts,
+                                               insert_ref_group = NULL,
+                                               ref_group = NULL)
+          
+        }else if(input$DE_class_cluster_method == 'group_info'){
+          
+          variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                               scaling=input$DE_class_pca_scale,
+                                               centering=input$DE_class_pca_center,
+                                               cluster_method=input$DE_class_cluster_method,
+                                               insert_ref_group = input$DE_user_ref_group,
+                                               ref_group = variables$DE.group.ref.group)
+          
+        }
+        
+        #### Output: DE.class.pca.biplot ####
+        output$DE.class.pca.biplot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.pca.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.pca.result[[4]]
+          })
+        })
+        
+        #### Output: DE.class.pca.screeplot ####
+        output$DE.class.pca.screeplot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.pca.result[[5]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.pca.result[[5]]
+          })
+        })
+        
+        #### Output: DE.class.pca.rotated.data ####
+        output$DE.class.pca.rotated.data <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.pca.result[[2]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.class.pca.result[[2]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.class.pca.rotated.data <- renderDataTable
+        
+        #### Output: DE.class.pca.contrib.table ####
+        output$DE.class.pca.contrib.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.pca.result[[3]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.class.pca.result[[3]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.class.pca.contrib.table <- renderDataTable
+        
+      }else if(input$DE_class_dim_redu_method == 'plsda'){
+        
+        if(input$DE_class_cluster_method == 'kmeans'){
+          
+          variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                   ncomp = 2,
+                                                   scaling = input$DE_class_plsda_scale,
+                                                   cluster_method = input$DE_class_cluster_method,
                                                    group_num = input$DE_class_kmeans_group,
-                                                   insert_ref_group = NULL,
-                                                   ref_group = NULL)
-              
-            }else if(input$DE_class_cluster_method == 'kmedoids'){
-              
-              variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                   scaling=input$DE_class_pca_scale,
-                                                   centering=input$DE_class_pca_center,
-                                                   cluster_method=input$DE_class_cluster_method,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_class_cluster_method == 'kmedoids'){
+          
+          variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                   ncomp = 2,
+                                                   scaling = input$DE_class_plsda_scale,
+                                                   cluster_method = input$DE_class_cluster_method,
                                                    group_num = input$DE_class_pam_group,
                                                    var1 = input$DE_class_pam_metric,
-                                                   insert_ref_group = NULL,
-                                                   ref_group = NULL)
-              
-            }else if(input$DE_class_cluster_method == 'hclustering'){
-              
-              variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                   scaling=input$DE_class_pca_scale,
-                                                   centering=input$DE_class_pca_center,
-                                                   cluster_method=input$DE_class_cluster_method,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_class_cluster_method == 'hclustering'){
+          
+          variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                   ncomp = 2,
+                                                   scaling = input$DE_class_plsda_scale,
+                                                   cluster_method = input$DE_class_cluster_method,
                                                    group_num = input$DE_class_hclust_group,
                                                    var1 = input$DE_class_hclust_dist,
                                                    var2 = input$DE_class_hclust_hclust,
-                                                   insert_ref_group = NULL,
-                                                   ref_group = NULL)
-              
-            }else if(input$DE_class_cluster_method == 'dbscan'){
-              
-              variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                   scaling=input$DE_class_pca_scale,
-                                                   centering=input$DE_class_pca_center,
-                                                   cluster_method=input$DE_class_cluster_method,
-                                                   var1 = input$DE_class_dbscan_eps,
-                                                   var2 = input$DE_class_dbscan_minPts,
-                                                   insert_ref_group = NULL,
-                                                   ref_group = NULL)
-              
-            }else if(input$DE_class_cluster_method == 'group_info'){
-              
-              variables$DE.class.pca.result <- PCA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                   scaling=input$DE_class_pca_scale,
-                                                   centering=input$DE_class_pca_center,
-                                                   cluster_method=input$DE_class_cluster_method,
                                                    insert_ref_group = input$DE_user_ref_group,
                                                    ref_group = variables$DE.group.ref.group)
-              
-            }
-            
-            #### Output: DE.class.pca.biplot ####
-            output$DE.class.pca.biplot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.pca.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.pca.result[[4]]
-              })
-            })
-            
-            #### Output: DE.class.pca.screeplot ####
-            output$DE.class.pca.screeplot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.pca.result[[5]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.pca.result[[5]]
-              })
-            })
-            
-            #### Output: DE.class.pca.rotated.data ####
-            output$DE.class.pca.rotated.data <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.pca.result[[2]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.pca.result[[2]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.class.pca.rotated.data <- renderDataTable
-            
-            #### Output: DE.class.pca.contrib.table ####
-            output$DE.class.pca.contrib.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.pca.result[[3]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.pca.result[[3]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.class.pca.contrib.table <- renderDataTable
-            
-          }else if(input$DE_class_dim_redu_method == 'plsda'){
-            
-            if(input$DE_class_cluster_method == 'kmeans'){
-              
-              variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                       ncomp = 2,
-                                                       scaling = input$DE_class_plsda_scale,
-                                                       cluster_method = input$DE_class_cluster_method,
-                                                       group_num = input$DE_class_kmeans_group,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'kmedoids'){
-              
-              variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                       ncomp = 2,
-                                                       scaling = input$DE_class_plsda_scale,
-                                                       cluster_method = input$DE_class_cluster_method,
-                                                       group_num = input$DE_class_pam_group,
-                                                       var1 = input$DE_class_pam_metric,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'hclustering'){
-              
-              variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                       ncomp = 2,
-                                                       scaling = input$DE_class_plsda_scale,
-                                                       cluster_method = input$DE_class_cluster_method,
-                                                       group_num = input$DE_class_hclust_group,
-                                                       var1 = input$DE_class_hclust_dist,
-                                                       var2 = input$DE_class_hclust_hclust,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'dbscan'){
-              
-              variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                       ncomp = 2,
-                                                       scaling = input$DE_class_plsda_scale,
-                                                       cluster_method = input$DE_class_cluster_method,
-                                                       var1 = input$DE_class_dbscan_eps,
-                                                       var2 = input$DE_class_dbscan_minPts,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'group_info'){
-              
-              variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                       ncomp = 2,
-                                                       scaling = input$DE_class_plsda_scale,
-                                                       cluster_method = input$DE_class_cluster_method,
-                                                       insert_ref_group = input$DE_user_ref_group,
-                                                       ref_group = variables$DE.group.ref.group)
-              
-            }
-            
-            #### Output: DE.class.plsda.sample.plot ####
-            output$DE.class.plsda.sample.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.plsda.result[[3]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.plsda.result[[3]]
-              })
-            })
-            
-            #### Output: DE.class.plsda.variable.plot ####
-            output$DE.class.plsda.variable.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.plsda.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.plsda.result[[4]]
-              })
-            })
-            
-            #### Output: DE.class.plsda.variate.table ####
-            output$DE.class.plsda.variate.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.plsda.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.plsda.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #DE.class.plsda.variate.table <- renderDataTable
-            
-            #### Output: DE.class.plsda.loading.table ####
-            output$DE.class.plsda.loading.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.plsda.result[[2]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.plsda.result[[2]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.class.plsda.loading.table <- renderDataTable
-            
-          }else if(input$DE_class_dim_redu_method == 'tsne'){
-            
-            if(input$DE_class_cluster_method == 'kmeans'){
-              
-              variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     pca=input$DE_class_tsne_pca,
-                                                     perplexity=input$DE_class_tsne_perplexity,
-                                                     max_iter=input$DE_class_tsne_max_iter,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_kmeans_group,
-                                                     insert_ref_group = input$DE_user_ref_group,
-                                                     ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'kmedoids'){
-              
-              variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     pca=input$DE_class_tsne_pca,
-                                                     perplexity=input$DE_class_tsne_perplexity,
-                                                     max_iter=input$DE_class_tsne_max_iter,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_pam_group,
-                                                     var1 = input$DE_class_pam_metric,
-                                                     insert_ref_group = input$DE_user_ref_group,
-                                                     ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'hclustering'){
-              
-              variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     pca=input$DE_class_tsne_pca,
-                                                     perplexity=input$DE_class_tsne_perplexity,
-                                                     max_iter=input$DE_class_tsne_max_iter,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_hclust_group,
-                                                     var1 = input$DE_class_hclust_dist,
-                                                     var2 = input$DE_class_hclust_hclust,
-                                                     insert_ref_group = input$DE_user_ref_group,
-                                                     ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'dbscan'){
-              
-              variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     pca=input$DE_class_tsne_pca,
-                                                     perplexity=input$DE_class_tsne_perplexity,
-                                                     max_iter=input$DE_class_tsne_max_iter,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     var1 = input$DE_class_dbscan_eps,
-                                                     var2 = input$DE_class_dbscan_minPts,
-                                                     insert_ref_group = input$DE_user_ref_group,
-                                                     ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'group_info'){
-              
-              variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     pca=input$DE_class_tsne_pca,
-                                                     perplexity=input$DE_class_tsne_perplexity,
-                                                     max_iter=input$DE_class_tsne_max_iter,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     insert_ref_group = input$DE_user_ref_group,
-                                                     ref_group = variables$DE.group.ref.group)
-              
-            }
-            
-            #### Output: DE.class.tsne.plot ####
-            output$DE.class.tsne.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.tsne.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.tsne.result[[2]]
-              })
-            })
-            
-            #### Output: DE.class.tsne.table ####
-            output$DE.class.tsne.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.tsne.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.tsne.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.class.tsne.table <- renderDataTable
-            
-            
-          }else if(input$DE_class_dim_redu_method == 'umap'){
-            
-            if(input$DE_class_cluster_method == 'kmeans'){
-              
-              variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     n_neighbors=input$DE_class_umap_n_neighbors,
-                                                     scale=input$DE_class_umap_scale,
-                                                     metric=input$DE_class_umap_metric,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_kmeans_group,
-                                                     insert_ref_group = input$DE_user_ref_group,
-                                                     ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'kmedoids'){
-              
-              variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     n_neighbors=input$DE_class_umap_n_neighbors,
-                                                     scale=input$DE_class_umap_scale,
-                                                     metric=input$DE_class_umap_metric,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_pam_group,
-                                                     var1 = input$DE_class_pam_metric,
-                                                     insert_ref_group = input$DE_user_ref_group,
-                                                     ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'hclustering'){
-              
-              variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     n_neighbors=input$DE_class_umap_n_neighbors,
-                                                     scale=input$DE_class_umap_scale,
-                                                     metric=input$DE_class_umap_metric,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     group_num = input$DE_class_hclust_group,
-                                                     var1 = input$DE_class_hclust_dist,
-                                                     var2 = input$DE_class_hclust_hclust,
-                                                     insert_ref_group = input$DE_user_ref_group,
-                                                     ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'dbscan'){
-              
-              variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     n_neighbors=input$DE_class_umap_n_neighbors,
-                                                     scale=input$DE_class_umap_scale,
-                                                     metric=input$DE_class_umap_metric,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     var1 = input$DE_class_dbscan_eps,
-                                                     var2 = input$DE_class_dbscan_minPts,
-                                                     insert_ref_group = input$DE_user_ref_group,
-                                                     ref_group = variables$DE.group.ref.group)
-              
-            }else if(input$DE_class_cluster_method == 'group_info'){
-              
-              variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
-                                                     n_neighbors=input$DE_class_umap_n_neighbors,
-                                                     scale=input$DE_class_umap_scale,
-                                                     metric=input$DE_class_umap_metric,
-                                                     cluster_method=input$DE_class_cluster_method,
-                                                     insert_ref_group = input$DE_user_ref_group,
-                                                     ref_group = variables$DE.group.ref.group)
-              
-            }
-            
-            #### Output: DE.class.umap.plot ####
-            output$DE.class.umap.plot <- renderPlotly({
-              isolate({
-                validate(need(!is.null(variables$DE.class.umap.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
-                variables$DE.class.umap.result[[2]]
-              })
-            })
-            
-            #### Output: DE.class.umap.table ####
-            output$DE.class.umap.table <- renderDataTable(server = FALSE,{
-              isolate({
-                validate(need(!is.null(variables$DE.class.umap.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-                
-                DT::datatable(variables$DE.class.umap.result[[1]],
-                              #caption = 'Lipid expression data',
-                              #colnames = c('feature', ML_group_info()$label_name),
-                              escape = FALSE, selection = 'none', rownames = TRUE, 
-                              class = "nowrap row-border",
-                              extensions = c('Buttons', 'Scroller'),
-                              options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                             # rowCallback = JS(
-                                             #   "function(row, data) {",
-                                             #   "for (i = 1; i < data.length; i++) {",
-                                             #   "if (data[i]>1 | data[i]<1){",
-                                             #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                             #   "}",
-                                             #   "}",
-                                             #   "}"),
-                                             deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                             dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                             columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-              })
-            }) #output$DE.class.umap.table <- renderDataTable
-            
-          }
           
-        }) #observeEvent(input$DE_class_dim_redu_method
+        }else if(input$DE_class_cluster_method == 'dbscan'){
+          
+          variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                   ncomp = 2,
+                                                   scaling = input$DE_class_plsda_scale,
+                                                   cluster_method = input$DE_class_cluster_method,
+                                                   var1 = input$DE_class_dbscan_eps,
+                                                   var2 = input$DE_class_dbscan_minPts,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_class_cluster_method == 'group_info'){
+          
+          variables$DE.class.plsda.result <- PLSDA(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                   ncomp = 2,
+                                                   scaling = input$DE_class_plsda_scale,
+                                                   cluster_method = input$DE_class_cluster_method,
+                                                   insert_ref_group = input$DE_user_ref_group,
+                                                   ref_group = variables$DE.group.ref.group)
+          
+        }
+        
+        #### Output: DE.class.plsda.sample.plot ####
+        output$DE.class.plsda.sample.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.plsda.result[[3]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.plsda.result[[3]]
+          })
+        })
+        
+        #### Output: DE.class.plsda.variable.plot ####
+        output$DE.class.plsda.variable.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.plsda.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.plsda.result[[4]]
+          })
+        })
+        
+        #### Output: DE.class.plsda.variate.table ####
+        output$DE.class.plsda.variate.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.plsda.result[[1]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.class.plsda.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #DE.class.plsda.variate.table <- renderDataTable
+        
+        #### Output: DE.class.plsda.loading.table ####
+        output$DE.class.plsda.loading.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.plsda.result[[2]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.class.plsda.result[[2]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.class.plsda.loading.table <- renderDataTable
+        
+      }else if(input$DE_class_dim_redu_method == 'tsne'){
+        
+        if(input$DE_class_cluster_method == 'kmeans'){
+          
+          variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 pca=input$DE_class_tsne_pca,
+                                                 perplexity=input$DE_class_tsne_perplexity,
+                                                 max_iter=input$DE_class_tsne_max_iter,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_kmeans_group,
+                                                 insert_ref_group = input$DE_user_ref_group,
+                                                 ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_class_cluster_method == 'kmedoids'){
+          
+          variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 pca=input$DE_class_tsne_pca,
+                                                 perplexity=input$DE_class_tsne_perplexity,
+                                                 max_iter=input$DE_class_tsne_max_iter,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_pam_group,
+                                                 var1 = input$DE_class_pam_metric,
+                                                 insert_ref_group = input$DE_user_ref_group,
+                                                 ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_class_cluster_method == 'hclustering'){
+          
+          variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 pca=input$DE_class_tsne_pca,
+                                                 perplexity=input$DE_class_tsne_perplexity,
+                                                 max_iter=input$DE_class_tsne_max_iter,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_hclust_group,
+                                                 var1 = input$DE_class_hclust_dist,
+                                                 var2 = input$DE_class_hclust_hclust,
+                                                 insert_ref_group = input$DE_user_ref_group,
+                                                 ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_class_cluster_method == 'dbscan'){
+          
+          variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 pca=input$DE_class_tsne_pca,
+                                                 perplexity=input$DE_class_tsne_perplexity,
+                                                 max_iter=input$DE_class_tsne_max_iter,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 var1 = input$DE_class_dbscan_eps,
+                                                 var2 = input$DE_class_dbscan_minPts,
+                                                 insert_ref_group = input$DE_user_ref_group,
+                                                 ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_class_cluster_method == 'group_info'){
+          
+          variables$DE.class.tsne.result <- tsne(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 pca=input$DE_class_tsne_pca,
+                                                 perplexity=input$DE_class_tsne_perplexity,
+                                                 max_iter=input$DE_class_tsne_max_iter,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 insert_ref_group = input$DE_user_ref_group,
+                                                 ref_group = variables$DE.group.ref.group)
+          
+        }
+        
+        #### Output: DE.class.tsne.plot ####
+        output$DE.class.tsne.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.tsne.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.tsne.result[[2]]
+          })
+        })
+        
+        #### Output: DE.class.tsne.table ####
+        output$DE.class.tsne.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.tsne.result[[1]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.class.tsne.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.class.tsne.table <- renderDataTable
+        
+        
+      }else if(input$DE_class_dim_redu_method == 'umap'){
+        
+        if(input$DE_class_cluster_method == 'kmeans'){
+          
+          variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 n_neighbors=input$DE_class_umap_n_neighbors,
+                                                 scale=input$DE_class_umap_scale,
+                                                 metric=input$DE_class_umap_metric,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_kmeans_group,
+                                                 insert_ref_group = input$DE_user_ref_group,
+                                                 ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_class_cluster_method == 'kmedoids'){
+          
+          variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 n_neighbors=input$DE_class_umap_n_neighbors,
+                                                 scale=input$DE_class_umap_scale,
+                                                 metric=input$DE_class_umap_metric,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_pam_group,
+                                                 var1 = input$DE_class_pam_metric,
+                                                 insert_ref_group = input$DE_user_ref_group,
+                                                 ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_class_cluster_method == 'hclustering'){
+          
+          variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 n_neighbors=input$DE_class_umap_n_neighbors,
+                                                 scale=input$DE_class_umap_scale,
+                                                 metric=input$DE_class_umap_metric,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 group_num = input$DE_class_hclust_group,
+                                                 var1 = input$DE_class_hclust_dist,
+                                                 var2 = input$DE_class_hclust_hclust,
+                                                 insert_ref_group = input$DE_user_ref_group,
+                                                 ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_class_cluster_method == 'dbscan'){
+          
+          variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 n_neighbors=input$DE_class_umap_n_neighbors,
+                                                 scale=input$DE_class_umap_scale,
+                                                 metric=input$DE_class_umap_metric,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 var1 = input$DE_class_dbscan_eps,
+                                                 var2 = input$DE_class_dbscan_minPts,
+                                                 insert_ref_group = input$DE_user_ref_group,
+                                                 ref_group = variables$DE.group.ref.group)
+          
+        }else if(input$DE_class_cluster_method == 'group_info'){
+          
+          variables$DE.class.umap.result <- UMAP(DE_class_exp_transform_data(), DE_group_info(), DE_class_sig()[,1],
+                                                 n_neighbors=input$DE_class_umap_n_neighbors,
+                                                 scale=input$DE_class_umap_scale,
+                                                 metric=input$DE_class_umap_metric,
+                                                 cluster_method=input$DE_class_cluster_method,
+                                                 insert_ref_group = input$DE_user_ref_group,
+                                                 ref_group = variables$DE.group.ref.group)
+          
+        }
+        
+        #### Output: DE.class.umap.plot ####
+        output$DE.class.umap.plot <- renderPlotly({
+          isolate({
+            validate(need(!is.null(variables$DE.class.umap.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
+            variables$DE.class.umap.result[[2]]
+          })
+        })
+        
+        #### Output: DE.class.umap.table ####
+        output$DE.class.umap.table <- renderDataTable(server = FALSE,{
+          isolate({
+            validate(need(!is.null(variables$DE.class.umap.result[[1]]), "Table not showing. Missing value imputation is recommended."))
+            
+            DT::datatable(variables$DE.class.umap.result[[1]] %>% mutate_if(is.numeric, ~round(., 5)),
+                          #caption = 'Lipid expression data',
+                          #colnames = c('feature', ML_group_info()$label_name),
+                          escape = FALSE, selection = 'none', rownames = TRUE, 
+                          class = "nowrap row-border",
+                          extensions = c('Buttons', 'Scroller'),
+                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
+                                         # rowCallback = JS(
+                                         #   "function(row, data) {",
+                                         #   "for (i = 1; i < data.length; i++) {",
+                                         #   "if (data[i]>1 | data[i]<1){",
+                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
+                                         #   "}",
+                                         #   "}",
+                                         #   "}"),
+                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
+                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
+                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
+          })
+        }) #output$DE.class.umap.table <- renderDataTable
+        
       }
-    #}) #isolate
+      
+    }) #observeEvent(input$DE_class_dim_redu_method
   }
-
 
 })
 
