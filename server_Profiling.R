@@ -1,3 +1,4 @@
+##test5.v27
 
 ################################
 ################################
@@ -7,10 +8,6 @@
 ################################
 ################################
 
-observeEvent(input$PRO_link_to_FAQ4, {
-  updateTabsetPanel(session, 'narbarpage', 'FAQ')
-  updateNavlistPanel(session, "navlistPanel_FAQ2", selected = 'FAQ4')
-})
 
 ############################
 ####  Assign variables  ####
@@ -80,7 +77,7 @@ PRO_sample_count <- reactive({
   }
 })
 
-shinyjs::hide('PRO_result_div')
+shinyjs::hide('PRO_tabPanel_div')
 
 ###########################
 ####  PRO Data Source  ####
@@ -102,14 +99,17 @@ output$PRO.demo.download <- downloadHandler(
 observeEvent(input$PRO_demo_upload, {
   
   if(input$PRO_demo_upload > 0){
-    
+    progressSweetAlert(
+      session = session, id = "PRO_demo_progress",
+      title = "Work in progress",
+      display_pct = TRUE, value = 0
+    )
     #### shinyjs show/hide main panel ####
     shinyjs::show('PRO_demo_mainPanel_div')
     
     #### import demo dataset ####
     variables$PRO.exp.data.demo <- readRDS('www/demo_dataset/Profiling/exp_data.rds')
     variables$PRO.lipid.char.tab.demo <- readRDS('www/demo_dataset/Profiling/lipid_char_table.rds')
-    
     #### Output: PRO.demo.exp.raw ####
     output$PRO.demo.exp.raw <- renderDataTable(server = FALSE,{
       isolate({
@@ -125,11 +125,15 @@ observeEvent(input$PRO_demo_upload, {
                                      columnDefs = list(list(className = 'dt-center', targets = "_all"))))
       })
     })
-    
+    updateProgressBar(
+      session = session,
+      id = "PRO_demo_progress",
+      value = 30
+    )
     #### Output: PRO.demo.exp ####
     output$PRO.demo.exp <- renderDataTable(server = FALSE,{
       isolate({
-        DT::datatable(PRO_exp_data(), 
+        DT::datatable(PRO_exp_data() %>% mutate_if(is.numeric, ~round(., 5)), 
                       #caption = 'Lipid expression data',
                       #colnames = c('feature', ML_group_info()$label_name),
                       escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -141,6 +145,11 @@ observeEvent(input$PRO_demo_upload, {
                                      columnDefs = list(list(className = 'dt-center', targets = "_all"))))
       })
     })
+    updateProgressBar(
+      session = session,
+      id = "PRO_demo_progress",
+      value = 60
+    )
     #### Output: PRO.demo.lipid.char ####
     output$PRO.demo.lipid.char <- renderDataTable(server = FALSE,{
       isolate({
@@ -156,7 +165,17 @@ observeEvent(input$PRO_demo_upload, {
                                      columnDefs = list(list(className = 'dt-center', targets = "_all"))))
       })
     })
-    
+    updateProgressBar(
+      session = session,
+      id = "PRO_demo_progress",
+      value = 90
+    )
+    updateProgressBar(
+      session = session,
+      id = "PRO_demo_progress",
+      value = 100
+    )
+    closeSweetAlert(session = session)
   }
   
 }) #observeEvent(input$PRO_demo_upload
@@ -168,7 +187,11 @@ observeEvent(input$PRO_user_upload, {
   shinyjs::show('PRO_user_mainPanel_div')
   
   #isolate({
-    
+  progressSweetAlert(
+    session = session, id = "PRO_user_progress",
+    title = "Work in progress",
+    display_pct = TRUE, value = 0
+  )
     showNotification("Start uploading file...", type = "message")
     tryCatch(
       {
@@ -221,6 +244,11 @@ observeEvent(input$PRO_user_upload, {
                    remove_na=input$PRO_rm_NA,remove_na_pct=input$PRO_rm_NA_pct)[[1]]
       })
     })
+    updateProgressBar(
+      session = session,
+      id = "PRO_user_progress",
+      value = 30
+    )
     ## lipid_char_table
     if(!is.null(input$PRO_user_char)){
       variables$PRO.check.lipid.char.tab.user <- data.table::fread(input$PRO_user_char$datapath, header = T, 
@@ -251,7 +279,11 @@ observeEvent(input$PRO_user_upload, {
       variables$PRO.lipid.char.user.col1 <- colnames(variables$PRO.lipid.char.tab.user)[1]
       colnames(variables$PRO.lipid.char.tab.user)[1] <- 'feature'
     }
-    
+    updateProgressBar(
+      session = session,
+      id = "PRO_user_progress",
+      value = 60
+    )
     # #### Output: PRO.user.exp ####
     # output$PRO.user.exp <- renderDataTable(server = FALSE,{
     #   
@@ -390,7 +422,7 @@ observeEvent(input$PRO_user_upload, {
           output$PRO.user.exp <- renderDataTable(server = FALSE,{
             isolate({
               validate(need(!is.null(PRO_exp_transform_data()), "Some error is in your expression data, please check your data and re-upload it."))
-              DT::datatable(PRO_exp_transform_data(), 
+              DT::datatable(PRO_exp_transform_data() %>% mutate_if(is.numeric, ~round(., 5)), 
                             #caption = 'Lipid expression data',
                             colnames = c(variables$PRO.exp.user.col1, colnames(variables$PRO.exp.data.user)[-1]),
                             escape = FALSE, selection = 'none', rownames = FALSE, 
@@ -429,7 +461,12 @@ observeEvent(input$PRO_user_upload, {
       }
       
     }) #observe
-
+    updateProgressBar(
+      session = session,
+      id = "PRO_user_progress",
+      value = 100
+    )
+    closeSweetAlert(session = session)
   #}) #isolate
   
 }) #observeEvent(input$PRO_user_upload
@@ -474,7 +511,7 @@ observe({
 #### control hide/show tabpanel: input$PRO_demo_start ####
 observeEvent(input$PRO_demo_start, {
   
-  shinyjs::show('PRO_result_div')
+  shinyjs::show('PRO_tabPanel_div')
   showTab(inputId = 'PRO_analysis_tab', target = 'Cross-sample variability')
   showTab(inputId = 'PRO_analysis_tab', target = 'Dimensionality reduction')
   showTab(inputId = 'PRO_analysis_tab', target = 'Correlation heatmap')
@@ -491,7 +528,7 @@ observeEvent(input$PRO_demo_start, {
 #### control hide/show tabpanel: input$PRO_user_start ####
 observeEvent(input$PRO_user_start, {
   
-  shinyjs::show('PRO_result_div')
+  shinyjs::show('PRO_tabPanel_div')
   showTab(inputId = 'PRO_analysis_tab', target = 'Cross-sample variability')
   showTab(inputId = 'PRO_analysis_tab', target = 'Dimensionality reduction')
   showTab(inputId = 'PRO_analysis_tab', target = 'Correlation heatmap')
@@ -518,9 +555,11 @@ observeEvent(input$PRO_user_start, {
 
 #### Function: exp_profilling ####
 exp_pro_result <- reactive({
-  
-  exp_profilling(PRO_exp_data())
-  
+  if(!is.null(PRO_exp_data())){
+    exp_profilling(PRO_exp_data()) 
+  }else{
+    NULL
+  }
 })
 
 #### Output: PRO.num.of.expressed.lipid ####
@@ -572,57 +611,73 @@ observeEvent(input$PRO_dim_redu_reset,{
 
 #### control start button ####
 observeEvent(input$PRO_dim_redu_start,{
-  if(submit_check(transform_data=PRO_exp_transform_data(),check_NA=T,feature_num=6)[[1]]!=TRUE){
-    showModal(modalDialog(
-      title = "Important message",
-      submit_check(transform_data=PRO_exp_transform_data(),check_NA=T,feature_num=6)[[2]],
-      easyClose = TRUE
-    ))
-  }else{
-    #### shinyjs show/hide results ####
-    shinyjs::show('PRO_dim_redu_result_div')
+  observeEvent(input$PRO_dim_redu_method,{
+    if(input$PRO_dim_redu_method == 'pca'){
+      feature_num_check=2
+      sample_num_check=6
+      shinyjs::hide('PRO_dim_redu_result_div')
+    }else if(input$PRO_dim_redu_method == 'tsne'){
+      feature_num_check=4
+      sample_num_check=2
+      shinyjs::hide('PRO_dim_redu_result_div')
+    }else{
+      feature_num_check=2
+      sample_num_check=2
+      shinyjs::hide('PRO_dim_redu_result_div')
+    }
     
-    #isolate({
-    observeEvent(input$PRO_dim_redu_method,{
-      #### Function: PCA ####
+    
+    if(submit_check(transform_data=PRO_exp_transform_data(),check_NA=T,feature_num=feature_num_check,sample_num=sample_num_check)[[1]]!=TRUE){
+      showModal(modalDialog(
+        title = "Important message",
+        submit_check(transform_data=PRO_exp_transform_data(),check_NA=T,feature_num=feature_num_check,sample_num=sample_num_check)[[2]],
+        easyClose = TRUE
+      ))
+      shinyjs::hide('PRO_dim_redu_result_div')
+    }else{
+      #### shinyjs show/hide results ####
+      shinyjs::show('PRO_dim_redu_result_div')
+    }
+    #### Function: PCA ####
+    isolate({
       if(input$PRO_dim_redu_method == 'pca'){
         
         if(input$PRO_cluster_method == 'kmeans'){
-          
-          variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                          scaling=input$PRO_pca_scale, 
-                                          centering=input$PRO_pca_center, 
-                                          cluster_method=input$PRO_cluster_method, 
-                                          group_num = input$PRO_kmeans_group)
-          
+          isolate({
+            variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                            scaling=input$PRO_pca_scale, 
+                                            centering=input$PRO_pca_center, 
+                                            cluster_method=input$PRO_cluster_method, 
+                                            group_num = input$PRO_kmeans_group)
+          })
         }else if(input$PRO_cluster_method == 'kmedoids'){
-          
-          variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                          scaling=input$PRO_pca_scale, 
-                                          centering=input$PRO_pca_center, 
-                                          cluster_method=input$PRO_cluster_method, 
-                                          group_num = input$PRO_pam_group, 
-                                          var1 = input$PRO_pam_metric)
-          
+          isolate({
+            variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                            scaling=input$PRO_pca_scale, 
+                                            centering=input$PRO_pca_center, 
+                                            cluster_method=input$PRO_cluster_method, 
+                                            group_num = input$PRO_pam_group, 
+                                            var1 = input$PRO_pam_metric)
+          })
         }else if(input$PRO_cluster_method == 'hclustering'){
-          
-          variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                          scaling=input$PRO_pca_scale, 
-                                          centering=input$PRO_pca_center, 
-                                          cluster_method=input$PRO_cluster_method, 
-                                          group_num = input$PRO_hclust_group, 
-                                          var1 = input$PRO_hclust_dist, 
-                                          var2 = input$PRO_hclust_hclust)
-          
+          isolate({
+            variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                            scaling=input$PRO_pca_scale, 
+                                            centering=input$PRO_pca_center, 
+                                            cluster_method=input$PRO_cluster_method, 
+                                            group_num = input$PRO_hclust_group, 
+                                            var1 = input$PRO_hclust_dist, 
+                                            var2 = input$PRO_hclust_hclust)
+          })
         }else if(input$PRO_cluster_method == 'dbscan'){
-          
-          variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                          scaling=input$PRO_pca_scale, 
-                                          centering=input$PRO_pca_center, 
-                                          cluster_method=input$PRO_cluster_method, 
-                                          var1 = input$PRO_dbscan_eps, 
-                                          var2 = input$PRO_dbscan_minPts)
-          
+          isolate({
+            variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                            scaling=input$PRO_pca_scale, 
+                                            centering=input$PRO_pca_center, 
+                                            cluster_method=input$PRO_cluster_method, 
+                                            var1 = input$PRO_dbscan_eps, 
+                                            var2 = input$PRO_dbscan_minPts)
+          })
         }
         
         #### Output: PRO.pca.biplot ####
@@ -646,7 +701,7 @@ observeEvent(input$PRO_dim_redu_start,{
           isolate({
             validate(need(!is.null(variables$PRO.pca.result[[2]]), "Table not showing. Missing value imputation is recommended."))
             
-            DT::datatable(variables$PRO.pca.result[[2]],
+            DT::datatable(variables$PRO.pca.result[[2]] %>% mutate_if(is.numeric, ~round(., 5)),
                           #caption = 'Lipid expression data',
                           #colnames = c('feature', ML_group_info()$label_name),
                           escape = FALSE, selection = 'none', rownames = TRUE, 
@@ -672,7 +727,7 @@ observeEvent(input$PRO_dim_redu_start,{
           isolate({
             validate(need(!is.null(variables$PRO.pca.result[[3]]), "Table not showing. Missing value imputation is recommended."))
             
-            DT::datatable(variables$PRO.pca.result[[3]],
+            DT::datatable(variables$PRO.pca.result[[3]] %>% mutate_if(is.numeric, ~round(., 5)),
                           #caption = 'Lipid expression data',
                           #colnames = c('feature', ML_group_info()$label_name),
                           escape = FALSE, selection = 'none', rownames = TRUE, 
@@ -696,45 +751,45 @@ observeEvent(input$PRO_dim_redu_start,{
       }else if(input$PRO_dim_redu_method == 'tsne'){
         
         if(input$PRO_cluster_method == 'kmeans'){
-          
-          variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            pca=input$PRO_tsne_pca, 
-                                            perplexity=input$PRO_tsne_perplexity,
-                                            max_iter=input$PRO_tsne_max_iter, 
-                                            cluster_method=input$PRO_cluster_method, 
-                                            group_num = input$PRO_kmeans_group)
-          
+          isolate({
+            variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                              pca=input$PRO_tsne_pca, 
+                                              perplexity=input$PRO_tsne_perplexity,
+                                              max_iter=input$PRO_tsne_max_iter, 
+                                              cluster_method=input$PRO_cluster_method, 
+                                              group_num = input$PRO_kmeans_group)
+          })
         }else if(input$PRO_cluster_method == 'kmedoids'){
-          
-          variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            pca=input$PRO_tsne_pca, 
-                                            perplexity=input$PRO_tsne_perplexity,
-                                            max_iter=input$PRO_tsne_max_iter, 
-                                            cluster_method=input$PRO_cluster_method, 
-                                            group_num = input$PRO_pam_group, 
-                                            var1 = input$PRO_pam_metric)      
-          
+          isolate({
+            variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                              pca=input$PRO_tsne_pca, 
+                                              perplexity=input$PRO_tsne_perplexity,
+                                              max_iter=input$PRO_tsne_max_iter, 
+                                              cluster_method=input$PRO_cluster_method, 
+                                              group_num = input$PRO_pam_group, 
+                                              var1 = input$PRO_pam_metric)      
+          })
         }else if(input$PRO_cluster_method == 'hclustering'){
-          
-          variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            pca=input$PRO_tsne_pca, 
-                                            perplexity=input$PRO_tsne_perplexity,
-                                            max_iter=input$PRO_tsne_max_iter, 
-                                            cluster_method=input$PRO_cluster_method, 
-                                            group_num = input$PRO_hclust_group, 
-                                            var1 = input$PRO_hclust_dist, 
-                                            var2 = input$PRO_hclust_hclust)       
-          
+          isolate({
+            variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                              pca=input$PRO_tsne_pca, 
+                                              perplexity=input$PRO_tsne_perplexity,
+                                              max_iter=input$PRO_tsne_max_iter, 
+                                              cluster_method=input$PRO_cluster_method, 
+                                              group_num = input$PRO_hclust_group, 
+                                              var1 = input$PRO_hclust_dist, 
+                                              var2 = input$PRO_hclust_hclust)       
+          })
         }else if(input$PRO_cluster_method == 'dbscan'){
-          
-          variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            pca=input$PRO_tsne_pca, 
-                                            perplexity=input$PRO_tsne_perplexity,
-                                            max_iter=input$PRO_tsne_max_iter, 
-                                            cluster_method=input$PRO_cluster_method, 
-                                            var1 = input$PRO_dbscan_eps, 
-                                            var2 = input$PRO_dbscan_minPts)       
-          
+          isolate({
+            variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                              pca=input$PRO_tsne_pca, 
+                                              perplexity=input$PRO_tsne_perplexity,
+                                              max_iter=input$PRO_tsne_max_iter, 
+                                              cluster_method=input$PRO_cluster_method, 
+                                              var1 = input$PRO_dbscan_eps, 
+                                              var2 = input$PRO_dbscan_minPts)       
+          })
         }
         
         #### Output: PRO.tsne.plot ####
@@ -775,45 +830,45 @@ observeEvent(input$PRO_dim_redu_start,{
       }else if(input$PRO_dim_redu_method == 'umap'){
         
         if(input$PRO_cluster_method == 'kmeans'){
-          
-          variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            n_neighbors=input$PRO_umap_n_neighbors, 
-                                            scale=input$PRO_umap_scale,
-                                            metric=input$PRO_umap_metric,
-                                            cluster_method=input$PRO_cluster_method, 
-                                            group_num = input$PRO_kmeans_group)       
-          
+          isolate({
+            variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                              n_neighbors=input$PRO_umap_n_neighbors, 
+                                              scale=input$PRO_umap_scale,
+                                              metric=input$PRO_umap_metric,
+                                              cluster_method=input$PRO_cluster_method, 
+                                              group_num = input$PRO_kmeans_group)       
+          })
         }else if(input$PRO_cluster_method == 'kmedoids'){
-          
-          variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            n_neighbors=input$PRO_umap_n_neighbors, 
-                                            scale=input$PRO_umap_scale,
-                                            metric=input$PRO_umap_metric,
-                                            cluster_method=input$PRO_cluster_method, 
-                                            group_num = input$PRO_pam_group, 
-                                            var1 = input$PRO_pam_metric)       
-          
+          isolate({
+            variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                              n_neighbors=input$PRO_umap_n_neighbors, 
+                                              scale=input$PRO_umap_scale,
+                                              metric=input$PRO_umap_metric,
+                                              cluster_method=input$PRO_cluster_method, 
+                                              group_num = input$PRO_pam_group, 
+                                              var1 = input$PRO_pam_metric)       
+          })
         }else if(input$PRO_cluster_method == 'hclustering'){
-          
-          variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            n_neighbors=input$PRO_umap_n_neighbors, 
-                                            scale=input$PRO_umap_scale,
-                                            metric=input$PRO_umap_metric,
-                                            cluster_method=input$PRO_cluster_method, 
-                                            group_num = input$PRO_hclust_group, 
-                                            var1 = input$PRO_hclust_dist, 
-                                            var2 = input$PRO_hclust_hclust)       
-          
+          isolate({
+            variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                              n_neighbors=input$PRO_umap_n_neighbors, 
+                                              scale=input$PRO_umap_scale,
+                                              metric=input$PRO_umap_metric,
+                                              cluster_method=input$PRO_cluster_method, 
+                                              group_num = input$PRO_hclust_group, 
+                                              var1 = input$PRO_hclust_dist, 
+                                              var2 = input$PRO_hclust_hclust)       
+          })
         }else if(input$PRO_cluster_method == 'dbscan'){
-          
-          variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            n_neighbors=input$PRO_umap_n_neighbors, 
-                                            scale=input$PRO_umap_scale,
-                                            metric=input$PRO_umap_metric, 
-                                            cluster_method=input$PRO_cluster_method, 
-                                            var1 = input$PRO_dbscan_eps, 
-                                            var2 = input$PRO_dbscan_minPts)       
-          
+          isolate({
+            variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
+                                              n_neighbors=input$PRO_umap_n_neighbors, 
+                                              scale=input$PRO_umap_scale,
+                                              metric=input$PRO_umap_metric, 
+                                              cluster_method=input$PRO_cluster_method, 
+                                              var1 = input$PRO_dbscan_eps, 
+                                              var2 = input$PRO_dbscan_minPts)       
+          })
         }
         
         #### Output: PRO.umap.plot ####
@@ -851,14 +906,12 @@ observeEvent(input$PRO_dim_redu_start,{
         }) #output$PRO.umap.table <- renderDataTable
         
       }
-    }) #observeEvent(input$PRO_dim_redu_method,
-    
-    
-    #}) #isolate
-  }
-  
-  
+    })
+  }) #observeEvent(input$PRO_dim_redu_method,
+
 })
+
+
 
 ##### PCA #####
 #### Function: PCA_variable ####
