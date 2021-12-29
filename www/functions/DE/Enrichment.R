@@ -1,6 +1,3 @@
-# Enrichment (DE_species_table, lipid_info_table, lipid_var, test, sig_pvalue)
-
-
 Enrichment <- function(DE_species_table_sig, lipid_char_table, char_var, sig_pvalue = 0.05){
   
   require(tidyverse)
@@ -94,9 +91,9 @@ Enrichment <- function(DE_species_table_sig, lipid_char_table, char_var, sig_pva
       
       x.max <- max(ceiling(plot.tab$m.log.p))
       x.label <- as.character(c(x.max:1, 0, 1:x.max))
-      
+      plot.tab <- plot.tab %>% group_by(characteristic) %>% mutate(rank=mlogP[which(abs(mlogP)==max(abs(mlogP)))])
       p.sig.class <- ggplot(plot.tab, 
-                            aes(x=mlogP, y=reorder(characteristic, mlogP), fill=significance)) + 
+                            aes(x=mlogP, y=reorder(characteristic, rank,max), fill=significance)) + 
         geom_col() + 
         geom_vline(xintercept = 0, color = '#444444') + 
         theme_hc() + 
