@@ -1,4 +1,7 @@
 # LipidSig: A Web-Based Tool For Lipidomic Data Analysis.
+This repository is released for the user who wants to build LipidSig website on their shiny server.
+<br>
+User could clone the whole repository and put it in a folder under /srv/shiny-server/
 ## Contents
 LipidSig is a highly flexible and user-friendly web server powered by WCCheng Lab in CMU.
 <br>
