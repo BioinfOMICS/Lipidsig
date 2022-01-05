@@ -164,6 +164,7 @@ Enrichment <- function(DE_species_table_sig, lipid_char_table, char_var, sig_pva
     p.sig.class$data$mlogP <- round(p.sig.class$data$mlogP,3)
     in.sig.class <- ggplotly(p.sig.class)
     for (i in 1:length(in.sig.class$x$data)){
+      in.sig.class$x$data[[i]]$text = gsub("reorder\\(characteristic, rank, max\\)",char_var,in.sig.class$x$data[[i]]$text)
       in.sig.class$x$data[[i]]$text = gsub("reorder\\(characteristic, mlogP\\)",char_var,in.sig.class$x$data[[i]]$text)
       in.sig.class$x$data[[i]]$text <- str_replace(string = in.sig.class$x$data[[i]]$text, pattern = '-', replacement = '')
       in.sig.class$x$data[[i]]$text <- str_replace(string = in.sig.class$x$data[[i]]$text, pattern = 'mlogP', replacement = '-log10(p-value)')
