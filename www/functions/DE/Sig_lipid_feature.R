@@ -1,5 +1,3 @@
-# Sig_lipid_feature (DE_species_table_sig, lipid_info_table, lipid_var)
-
 Sig_lipid_feature <- function(DE_species_table_sig, lipid_char_table, char_var, sig_FC = 2){
   
   require(tidyverse)
@@ -49,9 +47,11 @@ Sig_lipid_feature <- function(DE_species_table_sig, lipid_char_table, char_var, 
   in.log2fc.sig.ggplotly <- ggplotly(p.log2fc.sig)
   
   for(i in 1:length(in.log2fc.sig.ggplotly$x$data)){
-    in.log2fc.sig.ggplotly$x$data[[i]]$text =paste0(char_var,' :',p.log2fc.sig$data$characteristic,
-                                                    '\nmean(log2FC) :',round(p.log2fc.sig$data$log2FC.mean,3),
-                                                    '\nsignificant :',p.log2fc.sig$data$significant)
+    in.log2fc.sig.ggplotly$x$data[[i]]$text =gsub('(characteristic, -log2FC.mean)','',in.log2fc.sig.ggplotly$x$data[[i]]$text)
+    in.log2fc.sig.ggplotly$x$data[[i]]$text =gsub('reorder',paste0(char_var,' :'),in.log2fc.sig.ggplotly$x$data[[i]]$text)
+    in.log2fc.sig.ggplotly$x$data[[i]]$text =gsub('\\(\\): ','',in.log2fc.sig.ggplotly$x$data[[i]]$text)
+    in.log2fc.sig.ggplotly$x$data[[i]]$text =gsub('log2FC.mean: ','mean(log2FC) :',in.log2fc.sig.ggplotly$x$data[[i]]$text)
+    in.log2fc.sig.ggplotly$x$data[[i]]$text =gsub('significant: ','significant :',in.log2fc.sig.ggplotly$x$data[[i]]$text)
   }
   
   in.log2fc.sig <- in.log2fc.sig.ggplotly
@@ -80,7 +80,7 @@ Sig_lipid_feature <- function(DE_species_table_sig, lipid_char_table, char_var, 
                                ggtheme = theme_pubr()) +
     geom_point(aes(text=paste("Characteristic :",characteristic,"<br>","log2FC : ",round(log2FC,2)),
                    color = characteristic,size=3)) + 
-    guides(size = FALSE)
+    guides(size = "none")
   in.sig.dotchart <- ggplotly(p.sig.dotchart,tooltip = "text")
   
   
