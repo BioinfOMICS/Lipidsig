@@ -1,7 +1,7 @@
 
 
 ML_final <- function(ML_data,ranking_method, ML_method, 
-                     split_prop, nfold, alpha){
+                     split_prop, nfold, alpha,session,id){
   require(tidyverse)
   require(parsnip)
   require(tidymodels)
@@ -266,6 +266,12 @@ ML_final <- function(ML_data,ranking_method, ML_method,
     
     cv <- mc_cv(data, prop = split_prop, times = nfold, strata = NULL)
     
+    updateProgressBar(
+      session = session,
+      id = id,
+      title = "Data split done....",
+      value = 40
+    )
     print('Data split done')
     num <- nrow(analysis(cv$splits[[1]]))
     num1 <- num+1
@@ -312,7 +318,11 @@ ML_final <- function(ML_data,ranking_method, ML_method,
                                   importance=rep(NA, 30000),
                                   cv_fold=rep(NA, 30000),
                                   feature_num=rep(NA, 30000))
-    
+    updateProgressBar(
+      session = session,
+      id = id,
+      value = 50
+    )
     m=0
     best_model <- list(length(sele_feature_num))
     best_model_feature <- list(length(sele_feature_num))
@@ -375,7 +385,12 @@ ML_final <- function(ML_data,ranking_method, ML_method,
       names(feature_save) <- as.character(sele_feature_num)
       cv_feature_save[[a]] <- feature_save
     }
-    
+    updateProgressBar(
+      session = session,
+      id = id,
+      title = "Cross validation done....",
+      value = 70
+    )
     print('Cross validation done')
     
     cv_model_result <- cv_model_result %>% mutate(ranking_method=ranking_method) %>% 
