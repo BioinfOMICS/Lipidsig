@@ -8,10 +8,6 @@
 #######################################
 #######################################
 
-observeEvent(input$ML_link_to_FAQ4, {
-  updateTabsetPanel(session, 'narbarpage', 'FAQ')
-  updateNavlistPanel(session, "navlistPanel_FAQ2", selected = 'FAQ4')
-})
 
 ############################
 ####  Assign variables  ####
@@ -100,7 +96,7 @@ output$ML.demo.download <- downloadHandler(
 
 #### ML demo dataset ####
 observeEvent(input$ML_demo_upload, {
-  
+  shinyjs::hide('ML_user_mainPanel_div')
   if(input$ML_demo_upload > 0){
     progressSweetAlert(
       session = session, id = "ML_demo_upload_progress",
@@ -210,7 +206,7 @@ observeEvent(input$ML_demo_upload, {
 
 #### ML user dataset ####
 observeEvent(input$ML_user_upload, {
-  
+  shinyjs::hide('ML_demo_mainPanel_div')
   progressSweetAlert(
     session = session, id = "ML_user_upload_progress",
     title = "Work in progress",
@@ -685,6 +681,7 @@ observeEvent(input$ML_demo_start, {
     updateProgressBar(
       session = session,
       id = "ML_demo_progress",
+      title = "Work in data process1",
       value = 10
     )
     
@@ -702,6 +699,7 @@ observeEvent(input$ML_demo_start, {
     updateProgressBar(
       session = session,
       id = "ML_demo_progress",
+      title = "Work in data process2",
       value = 20
     )
     
@@ -713,10 +711,13 @@ observeEvent(input$ML_demo_start, {
                                        input$ML_demo_classification_method, 
                                        split_prop=1/TEST, 
                                        as.numeric(input$ML_demo_cross_vali_time), 
-                                       input$ML_demo_alpha)
+                                       input$ML_demo_alpha,
+                                       session = session,
+                                       id = "ML_demo_progress")
       updateProgressBar(
         session = session,
         id = "ML_demo_progress",
+        title = "Data process done....",
         value = 90
       )
       
@@ -727,10 +728,13 @@ observeEvent(input$ML_demo_start, {
                                        input$ML_demo_classification_method, 
                                        split_prop=1/TEST, 
                                        as.numeric(input$ML_demo_cross_vali_time), 
-                                       alpha = NULL)
+                                       alpha = NULL,
+                                       session = session,
+                                       id = "ML_demo_progress")
       updateProgressBar(
         session = session,
         id = "ML_demo_progress",
+        title = "Data process done....",
         value = 90
       )
       
@@ -784,6 +788,7 @@ observeEvent(input$ML_user_start, {
                                               input$ML_user_add_var)
     updateProgressBar(
       session = session,
+      title = "Work in data process1",
       id = "ML_user_progress",
       value = 10
     )
@@ -801,6 +806,7 @@ observeEvent(input$ML_user_start, {
     updateProgressBar(
       session = session,
       id = "ML_user_progress",
+      title = "Work in data process2",
       value = 20
     )
     
@@ -812,10 +818,13 @@ observeEvent(input$ML_user_start, {
                                        input$ML_user_classification_method, 
                                        split_prop=1/TEST, 
                                        as.numeric(input$ML_user_cross_vali_time), 
-                                       input$ML_user_alpha)
+                                       input$ML_user_alpha,
+                                       session = session,
+                                       id = "ML_user_progress")
       updateProgressBar(
         session = session,
         id = "ML_user_progress",
+        title = "Data process done....",
         value = 90
       )
       
@@ -826,10 +835,13 @@ observeEvent(input$ML_user_start, {
                                        input$ML_user_classification_method, 
                                        split_prop=1/TEST, 
                                        as.numeric(input$ML_user_cross_vali_time), 
-                                       alpha = NULL)
+                                       alpha = NULL,
+                                       session = session,
+                                       id = "ML_user_progress")
       updateProgressBar(
         session = session,
         id = "ML_user_progress",
+        title = "Data process done....",
         value = 90
       )
       
