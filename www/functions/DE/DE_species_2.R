@@ -145,14 +145,20 @@ DE_species_2 <- function(exp_data, data_transform = T, group_info, paired = F, t
   exp_data_stat$m_log10_p_adj <- round(exp_data_stat$m_log10_p_adj, 3)
   
   #### Significant lipid ####
-  if(sig_stat == 'p'){
+  if(sum(!is.na(exp_data_stat[,'p_value']))==0){
     sig.diff.exp <- exp_data_stat %>%
-      filter(sig_p == 'yes') %>% 
+      filter(abs(log2FC) >= log2(2)) %>% 
       distinct(feature, .keep_all = T)
-  }else if(sig_stat == 'p.adj'){
-    sig.diff.exp <- exp_data_stat %>%
-      filter(sig_p_adj == 'yes') %>% 
-      distinct(feature, .keep_all = T)
+  }else{
+    if(sig_stat == 'p'){
+      sig.diff.exp <- exp_data_stat %>%
+        filter(sig_p == 'yes') %>% 
+        distinct(feature, .keep_all = T)
+    }else if(sig_stat == 'p.adj'){
+      sig.diff.exp <- exp_data_stat %>%
+        filter(sig_p_adj == 'yes') %>% 
+        distinct(feature, .keep_all = T)
+    } 
   }
   
   if(nrow(sig.diff.exp) > 0){
@@ -178,15 +184,21 @@ DE_species_2 <- function(exp_data, data_transform = T, group_info, paired = F, t
                                legend = "right", 
                                #orientation = "horizontal",
                                ggtheme = theme_pubr()) #+
-      p.dotchart <- if(sig_stat == "p"){
+      p.dotchart <- if(sum(!is.na(sig.diff.exp[,'p_value']))==0){
+        p.dotchart + geom_point(aes(text=paste("feature :",feature,"<br>","log2(FC) : ",round(log2FC,2),"<br>",
+                                               "-log10(p-value) :",m_log10_p_value),color = log2FC,size=2.5))+ 
+          guides(size = 'none') + labs(colour="log2(FC)") +
+          scale_colour_gradient2(low="steelblue", mid="white", high="red", midpoint=0)  +
+          scale_y_continuous(breaks = c(-5, -2, -1, 0, 1, 2, 5), labels = c('-Inf', -2, -1, 0, 1, 2, 'Inf'), limits = c(-6, 6))
+      }else if(sig_stat == "p"){
         p.dotchart + geom_point(aes(text=paste("feature :",feature,"<br>","log2(FC) : ",round(log2FC,2),"<br>","-log10(p-value) :",m_log10_p_value),color = m_log10_p_value,size=2.5)) + 
-          guides(size = FALSE) + labs(colour="-log10(p-value)") +
+          guides(size = "none") + labs(colour="-log10(p-value)") +
           scale_colour_gradient2(low="steelblue", mid="white", high="red", midpoint=0) +
           scale_y_continuous(breaks = c(-5, -2, -1, 0, 1, 2, 5), labels = c('-Inf', -2, -1, 0, 1, 2, 'Inf'), limits = c(-6, 6))
       }else{
         p.dotchart+geom_point(aes(text=paste("feature:",feature,"<br>","log2(FC): ",
                                              round(log2FC,2),"<br>","-log10(padj) :",m_log10_p_adj),color = m_log10_p_adj,size=2.5)) + 
-          guides(size = FALSE) + labs(colour="-log10(padj)") +
+          guides(size = "none") + labs(colour="-log10(padj)") +
           scale_colour_gradient2(low="steelblue", mid="white", high="red", midpoint=0) +
           scale_y_continuous(breaks = c(-5, -2, -1, 0, 1, 2, 5), labels = c('-Inf', -2, -1, 0, 1, 2, 'Inf'), limits = c(-6, 6))
       }
@@ -240,15 +252,21 @@ DE_species_2 <- function(exp_data, data_transform = T, group_info, paired = F, t
                                legend = "right", 
                                #orientation = "horizontal",
                                ggtheme = theme_pubr()) #+
-      p.dotchart <- if(sig_stat == "p"){
+      p.dotchart <- if(sum(!is.na(sig.diff.exp[,'p_value']))==0){
+        p.dotchart + geom_point(aes(text=paste("feature :",feature,"<br>","log2(FC) : ",round(log2FC,2),"<br>",
+                                               "-log10(p-value) :",m_log10_p_value),color = log2FC,size=2.5))+ 
+          guides(size = 'none') + labs(colour="log2(FC)") +
+          scale_colour_gradient2(low="steelblue", mid="white", high="red", midpoint=0)  +
+          scale_y_continuous(breaks = c(-5, -2, -1, 0, 1, 2, 5), labels = c('-Inf', -2, -1, 0, 1, 2, 'Inf'), limits = c(-6, 6))
+      }else if(sig_stat == "p"){
         p.dotchart + geom_point(aes(text=paste("feature :",feature,"<br>","log2(FC) : ",round(log2FC,2),"<br>",
                                                "-log10(p-value) :",m_log10_p_value),color = m_log10_p_value,size=2.5)) + 
-          guides(size = FALSE) + labs(colour="-log10(p-value)") +
+          guides(size = "none") + labs(colour="-log10(p-value)") +
           scale_colour_gradient2(low="steelblue", mid="white", high="red", midpoint=0)
       }else{
         p.dotchart + geom_point(aes(text=paste("feature :",feature,"<br>","log2(FC) : ",round(log2FC,2),"<br>",
                                                "-log10(padj) :",m_log10_p_adj),color = m_log10_p_adj,size=2.5)) + 
-          guides(size = FALSE) + labs(colour="-log10(padj)") +
+          guides(size = "none") + labs(colour="-log10(padj)") +
           scale_colour_gradient2(low="steelblue", mid="white", high="red", midpoint=0)
       }
       
@@ -296,16 +314,22 @@ DE_species_2 <- function(exp_data, data_transform = T, group_info, paired = F, t
                                legend = "right", 
                                #orientation = "horizontal",
                                ggtheme = theme_pubr()) #+ 
-      p.dotchart <- if(sig_stat == "p"){
+      p.dotchart <- if(sum(!is.na(sig.diff.exp[,'p_value']))==0){
+        p.dotchart + geom_point(aes(text=paste("feature :",feature,"<br>","log2(FC) : ",round(log2FC,2),"<br>",
+                                               "-log10(p-value) :",m_log10_p_value),color = log2FC,size=2.5))+ 
+          guides(size = 'none') + labs(colour="log2(FC)") +
+          scale_colour_gradient2(low="steelblue", mid="white", high="red", midpoint=0)  +
+          scale_y_continuous(breaks = c(-5, -2, -1, 0, 1, 2, 5), labels = c('-Inf', -2, -1, 0, 1, 2, 'Inf'), limits = c(-6, 6))
+      }else if(sig_stat == "p"){
         p.dotchart + geom_point(aes(text=paste("feature :",feature,"<br>","log2(FC) : ",round(log2FC,2),"<br>",
                                                "-log10(p-value) :",m_log10_p_value),color = m_log10_p_value,size=2.5))+ 
-          guides(size = FALSE) + labs(colour="-log10(p-value)") +
+          guides(size = "none") + labs(colour="-log10(p-value)") +
           scale_colour_gradient2(low="steelblue", mid="white", high="red", midpoint=0) + 
           scale_y_continuous(breaks = c(-INF, -2, -1, 0, 1, 2, INF), labels = c('-Inf', -2, -1, 0, 1, 2, 'Inf'), limits = c(-(INF+1), (INF+1)))
       }else{
         p.dotchart + geom_point(aes(text=paste("feature :",feature,"<br>","log2(FC) : ",round(log2FC,2),"<br>",
                                                "-log10(padj) :",m_log10_p_adj),color = m_log10_p_adj,size=2.5)) + 
-          guides(size = FALSE) + labs(colour="-log10(padj)") +
+          guides(size = "none") + labs(colour="-log10(padj)") +
           scale_colour_gradient2(low="steelblue", mid="white", high="red", midpoint=0) + 
           scale_y_continuous(breaks = c(-INF, -2, -1, 0, 1, 2, INF), labels = c('-Inf', -2, -1, 0, 1, 2, 'Inf'), limits = c(-(INF+1), (INF+1)))
       }
