@@ -14,7 +14,7 @@ On the LipidSig website, user can identify significant lipid-related features an
 ## Source Code Release
 In 2021/08/03, we provide the source code of LipidSig on the Lipidsig Github.
 <br>
-To install the LipidSig web service on your own linux device:
+To install the LipidSig web service on your own device:
 1. install shiny-server service 
 2. clone LipidSig and put the folder under /srv/shiny-server/
 3. http://[<I>your IP address</I>]/LipisSig
