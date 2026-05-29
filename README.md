@@ -50,12 +50,9 @@ Git is needed to download the repository.
 Open a terminal (Command Prompt / PowerShell on Windows, Terminal on macOS/Linux) and run:
 
 ```bash
-git clone https://github.com/<YOUR_USERNAME>/LipidSig.git
+git clone https://github.com/BioinfOMICS/LipidSig.git
 cd LipidSig
 ```
-
-> Replace `<YOUR_USERNAME>` with the actual GitHub username or organisation.
-
 ---
 
 ### Step 4 — Build and start the app
