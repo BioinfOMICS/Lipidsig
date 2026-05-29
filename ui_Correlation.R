@@ -1,751 +1,679 @@
+tabPanel(title=htmltools::HTML("<h4 style='font-size:18px;padding-top:20.5px;padding-bottom:20.5px;'>Correlation</h4>"),
 
-tabPanel(title = h4('Correlation'),
-         value = 'Correlation',
+         value='Correlation',
          #### Correlation Header Panel ####
-         h1('Correlation analysis'), 
-         br(),
-         fluidRow(column(width=12, 
+         htmltools::h1('Correlation analysis'),
+         htmltools::br(),
+         shiny::fluidRow(
+           shiny::column(width=12,
                          ########################################
                          ####  Correlation Page Description  ####
                          ########################################
-                         div(id = 'CORR_description_style_div', 
-                             h6('In this section, we provide a comprehensive correlation analysis to assist researchers to interrogate the clinical features that connect to lipids species and other mechanistically relevant lipid characteristics.
-                                Correlation analysis between lipids and clinical features is broadly used in many fields of study, such as Bowler RP et al. discovering that sphingomyelins are strongly associated with emphysema and glycosphingolipids are associated with COPD exacerbations.
-                                Hence, continuous clinical data can be uploaded here, and diverse correlation analyses are offered. For instance, the Correlation Coefficient and Linear Regression are supported for continuous clinical data. Moreover,
-                                lipids can be classified either by lipid species or by lipid categories when conducting these correlation analyses.',style="text-align: left"),
-                             style="background-color: PowderBlue;border-left: 8px solid Teal;padding: 15px"
-                             ), #div #CORR_description_style_div
-                         br(), 
+                         htmltools::div(id='CORR_description_style_div',
+                                        htmltools::h6('In this section, we provide a comprehensive correlation analysis to assist researchers to interrogate the clinical features that connect to lipids species and other mechanistically relevant lipid characteristics.
+                                           Correlation analysis between lipids and clinical features is broadly used in many fields of study, such as Bowler RP et al. discovering that sphingomyelins are strongly associated with emphysema and glycosphingolipids are associated with COPD exacerbations.
+                                           Hence, continuous clinical data can be uploaded here, and diverse correlation analyses are offered. For instance, the Correlation Coefficient and Linear Regression are supported for continuous clinical data. Moreover,
+                                           lipids can be classified either by lipid species or by lipid categories when conducting these correlation analyses.',style="text-align: left"),
+                                        htmltools::br(),
+                                        htmltools::HTML('<em style="font-size:17px; text-align:left; line-height: 25px;">
+                                              <i class="fas fa-caret-right" role="presentation" aria-label="caret-right icon"></i>
+                                              Demo dataset source: <a href="https://pubmed.ncbi.nlm.nih.gov/25494452/" target="_blank">Plasma sphingolipids associated with chronic obstructive pulmonary disease phenotypes (Am J Respir Crit Care Med. 2015)</a>
+                                             </em>'),
+                                        style="background-color: PowderBlue;border-left: 8px solid Teal;padding: 15px"
+                         ), #div #CORR_description_style_div
+                         htmltools::br(),
                          ###################################
                          ####  Correlation Data Source  ####
                          ###################################
-                         h2('Data Source'),
-                         sidebarLayout(fluid = T,
-                                       sidebarPanel(width = 4, 
-                                                    radioButtons(inputId = 'CORR_data_source', 
-                                                                 label = h4('Data source'), 
-                                                                 choices = c('Example dataset (Am J Respir Crit Care Med. 2015)' = 'CORR_demo_data', 
-                                                                             'Upload your data!' = 'CORR_user_data'), 
-                                                                 selected = 'CORR_demo_data'
-                                                                 )%>% #radioButtons #CORR_data_source
-                                                      helper(type = "inline",
-                                                             title = "Data source",
-                                                             size ="l",
-                                                             content = c('<ol style="font-size: 0px;">',
-                                                                         '<li style="font-size: 16px;">Lipid dataset can be uploaded by users or using example datasets. This information, namely Lipid expression data, Condition table and Lipid characteristics (optional). Three tables must assign to a vector  all data needs to be uploaded in 
-                                                                         <mark style="background-color: white;color: red;">CSV</mark> or <mark style="background-color: white;color: red;">TSV</mark> format. The maximum file size is 30MB.</li>',
-                                                                         '<li style="font-size: 16px;">Once two files are chosen and shown ‘Upload complete’ then press ‘Upload’.</li>',
-                                                                         '</ol>')),
-                                                    conditionalPanel(condition = 'input.CORR_data_source == "CORR_demo_data"', 
-                                                                     actionButton(inputId = 'CORR_demo_cont_upload', label = 'Submit', icon = icon('upload')), #actionButton #CORR_demo_cont_upload
-                                                                     downloadButton(outputId = 'CORR.demo.download', label = 'Download example')
-                                                                     ), #conditionalPanel
-                                                    conditionalPanel(condition = 'input.CORR_data_source == "CORR_user_data"',
-                                                                     div(id = 'CORR_user_reset_div', 
-                                                                         fileInput(inputId = 'CORR_user_exp', label = 'Lipid expression data:', accept = c(".csv",".tsv"), multiple = F) %>% #fileInput #CORR_user_exp
-                                                                           helper(type = "inline",
-                                                                                  title = "Lipid expression data",
-                                                                                  size ="l",
-                                                                                  content = c('<ol style="font-size: 0px;">',
-                                                                                              '<li style="font-size: 16px;">The first column must contain a list of unique lipids name(features). NOTE: THE FEATURE LIST OF THE FIRST COLUMN MUST SAME AS ‘Lipid characteristics’!</li>',
-                                                                                              '<li style="font-size: 16px;">Other columns encompass the expressed values of groups under different conditions that you want to compare.</li>',
-                                                                                              '<li style="font-size: 16px;">An example of ‘Lipid expression data’</li>',
-                                                                                              '<img src="Description/CORR_Lipid expression data.png" width="100%"/>',
-                                                                                              '</ol>')), 
-                                                                         fileInput(inputId = 'CORR_user_cond', label = 'Condition table:', accept = c(".csv",".tsv"), multiple = F)%>% #fileInput #CORR_user_cond
-                                                                           helper(type = "inline",
-                                                                                  title = "Condition table",
-                                                                                  size ="l",
-                                                                                  content = c('<ol style="font-size: 0px;">',
-                                                                                              '<li style="font-size: 16px;">The condition table encompasses sample names and clinical conditions (disease status, gene dependence score etc.), which assigned each sample to a specific condition for further association analysis.</li>',
-                                                                                              '<li style="font-size: 16px;">The first column must contain a list of samples name, MUST SAME AS THE SAMPLE NAME (COLUM NAMES) OF ‘Lipid expression data’ !</li>',
-                                                                                              '<li style="font-size: 16px;">Other columns are clinical conditions, such as Emphysema, Exacerbations. NOTE: ALL VALUES MUST BE NUMERIC</li>',
-                                                                                              '<li style="font-size: 16px;">An example of ‘Condition table’</li>',
-                                                                                              '<img src="Description/CORR_Condition table.png" width="100%"/>',
-                                                                                              '</ol>')), 
-                                                                         fileInput(inputId = 'CORR_user_adj', label = 'Adjusted table (optional):', accept = c(".csv",".tsv"), multiple = F)%>% #fileInput #CORR_user_adj
-                                                                           helper(type = "inline",
-                                                                                  title = "Adjusted table",
-                                                                                  size ="l",
-                                                                                  content = c('<ol style="font-size: 0px;">',
-                                                                                              '<li style="font-size: 16px;">‘Adjusted table’ represents the user-defined variables that will be corrected in linear regression or logistic regression analysis, which can be the cancer types or the clinical information, like gender, age, or BMI.</li>',
-                                                                                              '<li style="font-size: 16px;">The first column must contain a list of samples name, MUST SAME AS THE SAMPLE NAME (COLUM NAMES) OF ‘Lipid expression data’ !</li>',
-                                                                                              '<li style="font-size: 16px;">An example of ‘Adjusted table’:</li>',
-                                                                                              '<img src="Description/CORR_Adjusted table.png" width="100%"/>',
-                                                                                              '</ol>')), 
-                                                                         fileInput(inputId = 'CORR_user_char', label = 'Lipid characteristics (optional):', accept = c(".csv",".tsv"), multiple = F)%>% #fileInput #CORR_user_char
-                                                                           helper(type = "inline",
-                                                                                  title = "Lipid characteristics",
-                                                                                  size ="l",
-                                                                                  content = c('<ol style="font-size: 0px;">',
-                                                                                              '<li style="font-size: 16px;">The first column must contain a list of unique lipids name (features). NOTE: : THE FEATURE LIST OF THE FIRST COLUMN MUST SAME AS ‘Lipid expression data’!</li>',
-                                                                                              '<li style="font-size: 16px;">Other columns can contain a wide variety of lipid characteristics, including class, total length, the total number of double bonds, or any other characteristics. The value can be the number of characters.</li>',
-                                                                                              '<li style="font-size: 16px;">Due to the numbers of fatty acids attached to lipid are various, hence, if users assign the column name starting with “FA_”, system will automatically extract values separated by commas; Value between commas needs to be positive integer or zero.</li>',
-                                                                                              '<li style="font-size: 16px;">If the name of characteristics matches ‘class’ (whole word only), the content must be characters, while ‘totallength’, ‘totaldb’, ‘totaloh’ (whole word only) must be numeric</li>',
-                                                                                              '<li style="font-size: 16px;">An example of ‘Lipid characteristics’</li>',
-                                                                                              '<img src="Description/CORR_Lipid characteristics.png" width="100%"/>',
-                                                                                              '</ol>')), 
-                                                                         helpText("Upload your data table in .csv/.tsv"), #helpText
-                                                                         br(),
-                                                                         h4('Data processing') %>%
-                                                                           helper(type = "inline",
-                                                                                  title = "Data processing",
-                                                                                  content = c('<ol style="font-size: 0px;">',
-                                                                                              '<li style="font-size: 16px;">If you clicking on ‘Remove features with many missing values’, the threshold of the percentage of blank in the dataset that will be deleted can be defined by users.</li>',
-                                                                                              '<img src="Description/Data processing_1.png" />',
-                                                                                              '<li style="font-size: 16px;">The ‘Missing values imputation’ is for users to choose minimum, mean, and median to replace the missing values in the dataset. If users select minimum, minimum will be multiplied by the value of user inputted. After uploading data, three datasets will show on the right-hand side. When finishing checking data, click ‘Start’ for further analysis.</li>',
-                                                                                              '<img src="Description/Data processing_2.png" />',
-                                                                                              '<li style="font-size: 16px;">‘Percentage transformation’, ‘Log10 transformation’ can transform data into log10 or percentage. The purpose of ‘Log10 transformation’ is to make highly skewed distributions less skewed, while ‘Percentage transformation’ is to standardize variation between groups.</li>',
-                                                                                              '<img src="Description/Data processing_3.png" />',
-                                                                                              '</ol>')),
-                                                                         checkboxInput(inputId = "CORR_rm_NA", 
-                                                                                       label = "Remove features with many missing values", 
-                                                                                       value = T), #checkboxInput #CORR_rm_NA
-                                                                         conditionalPanel(condition = 'input.CORR_rm_NA', 
-                                                                                          numericInput(inputId = 'CORR_rm_NA_pct', 
-                                                                                                       label = 'More than % missing values', 
-                                                                                                       value = 50, 
-                                                                                                       min = 5, 
-                                                                                                       max = 100, 
-                                                                                                       step = 5)
-                                                                                          ), #conditionalPanel
-                                                                         checkboxInput(inputId = "CORR_rp_NA", 
-                                                                                       label = "Missing values imputation", 
-                                                                                       value = T),
-                                                                         conditionalPanel(condition = 'input.CORR_rp_NA',
-                                                                                          selectInput(inputId = 'CORR_fill_NA',
-                                                                                                      label = 'Fill missing value with:',
-                                                                                                      choices = c('Mean' = 'mean', 
-                                                                                                                  'Median' = 'median', 
-                                                                                                                  'Minimum' = 'min'), 
-                                                                                                      selected = 'min', 
-                                                                                                      multiple = F),
-                                                                                          conditionalPanel(condition = 'input.CORR_fill_NA == "min"', 
-                                                                                                           numericInput(inputId = 'CORR_fill_min', 
-                                                                                                                        label = 'Multiply by minimum', 
-                                                                                                                        value = 0.5, 
-                                                                                                                        min = 0.1, 
-                                                                                                                        max = 0.5, 
-                                                                                                                        step = 0.1)
-                                                                                                           ) #conditionalPanel
-                                                                                          ), #conditionalPanel
-                                                                         checkboxInput(inputId = "CORR_pct_trans", 
-                                                                                       label = "Percentage transformation", 
-                                                                                       value = T),
-                                                                         checkboxInput(inputId = "CORR_log_trans", 
-                                                                                       label = "Log10 transformation", 
-                                                                                       value = T)
-                                                                         ), #div #CORR_user_reset_div
-                                                                     actionButton(inputId = 'CORR_user_reset', label = 'Reset', icon = icon('redo')), #actionButton #CORR_user_reset
-                                                                     actionButton(inputId = 'CORR_user_upload', label = 'Upload', icon = icon('upload')) #actionButton #CORR_user_upload
-                                                                     ), #conditionalPanel
-                                                    tags$p(actionLink("CORR_link_to_FAQ4", 
-                                                                      "How to prepare your dataset?",
-                                                                      style = "color: darkblue;"))
-                                                    ), #sidebarPanel
-                                       mainPanel(width = 8, 
-                                                 conditionalPanel(condition = 'input.CORR_data_source == "CORR_demo_data" & input.CORR_demo_cont_upload', 
-                                                                  div(id = 'CORR_demo_cont_mainPanel_div', 
-                                                                      column(width = 12,
-                                                                             div(id = 'CORR_demo_cont_description_style_div', 
-                                                                                 h3(p("Demo dataset",style="text-align: left")),
-                                                                                 h6('Bowler, Russell P., et al. "Plasma sphingolipids associated with chronic obstructive pulmonary disease phenotypes." 
-                                                                                    American journal of respiratory and critical care medicine 191.3 (2015): 275-284.
-                                                                                    This paper detected 69 distinct plasma sphingolipid species in 129 current and former smokers by targeted mass spectrometry.
-                                                                                    This cohort was used to interrogate the associations of plasma sphingolipids with subphenotypes of COPD including airflow obstruction, emphysema, and frequent exacerbations.',style="text-align:left"),
-                                                                                 h6('For the data sources, users can either upload their datasets or use our Demo datasets.
-                                                                                    The datatype of the dataset must be continuous data. The dataset needs to contain two tables,
-                                                                                    ‘lipid expression data’ and ‘condition table’. Another optional tables for adjustment and lipid characteristics analysis are also can be uploaded by users. ',
-                                                                                    style="text-align:left"),
-                                                                                 style="text-align:justify;background-color:AliceBlue;padding:15px;border-radius:10px"
-                                                                                 ), #div #CORR_demo_data_description_style_div
-                                                                             br(), 
-                                                                             h4(strong('Lipid expression data')),
-                                                                             tabsetPanel(id = 'CORR_demo_lipid_exp_tab',
-                                                                                         tabPanel(title = "Processed data", 
-                                                                                                  dataTableOutput(outputId = 'CORR.demo.cont.exp') %>% withSpinner(), #dataTableOutput #CORR.demo.cont.exp
-                                                                                                  ),
-                                                                                         tabPanel(title = "Raw data", 
-                                                                                                  dataTableOutput(outputId = 'CORR.demo.cont.exp.raw') %>% withSpinner(), #dataTableOutput #CORR.demo.cont.exp.raw
-                                                                                                  )
-                                                                                         ), #tabsetPanel
-                                                                             br(), 
-                                                                             h4(strong('Condition table (clinical factor)')),
-                                                                             dataTableOutput(outputId = 'CORR.demo.cont.cond') %>% withSpinner(), #dataTableOutput #CORR.demo.cont.cond
-                                                                             br()
-                                                                             ), #column
-                                                                      column(width = 6, 
-                                                                             h4(strong('Adjusted table')),
-                                                                             dataTableOutput(outputId = 'CORR.demo.cont.adj') %>% withSpinner() #dataTableOutput #CORR.demo.cont.adj
-                                                                             ), #column
-                                                                      column(width = 6, 
-                                                                             h4(strong('Lipid characteristics')),
-                                                                             dataTableOutput(outputId = 'CORR.demo.cont.char') %>% withSpinner() #dataTableOutput #CORR.demo.cont.char
-                                                                             ), #column
-                                                                      column(width = 12, br()), #column
-                                                                      column(width = 5), #column
-                                                                      column(width = 2, 
-                                                                             actionButton(inputId = 'CORR_demo_cont_start', label = 'Start!', icon = icon('play')) #actionButton #CORR_demo_cont_start
-                                                                             ), #column
-                                                                      column(width = 5) #column
-                                                                      ) #div #CORR_demo_cont_mainPanel_div
+                         htmltools::h2('Data Source'),
+                         shiny::sidebarLayout(fluid=TRUE,
+                                              shiny::sidebarPanel(width=4,
+                                                                  shiny::radioButtons(inputId='CORR_data_source', label=h4('Data source'),
+                                                                                      choices=c('Example dataset (Am J Respir Crit Care Med. 2015)'='CORR_demo_data',
+                                                                                                'Upload your data!'='CORR_user_data'),
+                                                                                      selected='CORR_demo_data') %>% #radioButtons #CORR_data_source
+                                                                    shinyhelper::helper(type="inline", title="Data source", size ="l",
+                                                                                        content=c('<ol style="font-size: 0px;">',
+                                                                                                  '<li style="font-size: 16px;">Lipid dataset can be uploaded by users or using example datasets. This information, namely Lipid abundance data, Condition table and Adjusted table (optional). Three tables must assign to a vector  all data needs to be uploaded in
+                                                                                                  <mark style="background-color: white;color: red;">CSV</mark>, <mark style="background-color: white;color: red;">TSV</mark>, or <mark style="background-color: white;color: red;">XLSX</mark> format.
+                                                                                                  The maximum file size is 30MB. <br>
+                                                                                                  <ul style="font-size: 16px; color:red;">
+                                                                                                  <li>NOTE: When uploading in XLSX format, ensure the data frame is on the first sheet. </li>
+                                                                                                  </ul>
+                                                                                                  </li>
+                                                                                                  <br>',
+                                                                                                  '<li style="font-size: 16px;">Once the files are chosen and shown ‘Upload complete’ then press ‘Upload’.</li>',
+                                                                                                  '</ol>')),
+                                                                  shiny::conditionalPanel(condition='input.CORR_data_source == "CORR_demo_data"',
+                                                                                          shiny::actionButton(inputId='CORR_demo_cont_upload', label='Submit', icon=shiny::icon('upload')), #actionButton #CORR_demo_cont_upload
+                                                                                          shiny::downloadButton(outputId='CORR.demo.download', label='Download example')
                                                                   ), #conditionalPanel
-                                                 conditionalPanel(condition = 'input.CORR_data_source == "CORR_user_data" & input.CORR_user_upload', 
-                                                                  div(id = 'CORR_user_mainPanel_div', 
-                                                                      column(width = 12,
-                                                                             div(id = 'CORR_user_data_description_style_div', 
-                                                                                 htmlOutput("CORR_Check_Exp_Data"),
-                                                                                 htmlOutput("CORR_Check_condition"),
-                                                                                 htmlOutput("CORR_Check_adjusted_table"),
-                                                                                 htmlOutput("CORR_Check_lipid_char"),
-                                                                                 htmlOutput("CORR_Data_summary"),
-                                                                                 style="text-align:justify;background-color:AliceBlue;padding:15px;border-radius:10px"
-                                                                                 ), #div #CORR_user_data_description_style_div
-                                                                             helpText(tags$p(icon("check"),": Successfully uploaded.", style="font-size: 16px;", HTML('&nbsp;'), icon("times"), ": Error happaned. Please check your dataset.", HTML('&nbsp;'), icon("exclamation"), ": Warning message.", style="font-size: 16px;")),
-                                                                             br()
-                                                                             ), #column
-                                                                      div(id = 'CORR_user_input_table_div',
-                                                                          column(width = 12,
-                                                                                 h4(strong('Lipid expression data')),
-                                                                                 tabsetPanel(id = 'CORR_user_lipid_exp_tab',
-                                                                                             tabPanel(title = "Processed data", 
-                                                                                                      dataTableOutput(outputId = 'CORR.user.exp') %>% withSpinner(), #dataTableOutput #CORR.user.exp
-                                                                                                      ),
-                                                                                             tabPanel(title = "Raw data", 
-                                                                                                      dataTableOutput(outputId = 'CORR.user.exp.raw') %>% withSpinner(), #dataTableOutput #CORR.user.exp.raw
-                                                                                                      )
-                                                                                             ), #tabsetPanel
-                                                                                 br(), 
-                                                                                 h4(strong('Condition table (clinical factor)')),
-                                                                                 dataTableOutput(outputId = 'CORR.user.cond') %>% withSpinner(), #dataTableOutput #CORR.user.cond
-                                                                                 br()
-                                                                                 ), #column
-                                                                          column(width = 6, 
-                                                                                 h4(strong('Adjusted table')),
-                                                                                 dataTableOutput(outputId = 'CORR.user.adj') %>% withSpinner() #dataTableOutput #CORR.user.adj
-                                                                                 ), #column
-                                                                          column(width = 6, 
-                                                                                 h4(strong('Lipid characteristics')),
-                                                                                 dataTableOutput(outputId = 'CORR.user.char') %>% withSpinner() #dataTableOutput #CORR.user.char
-                                                                                 ), #column
-                                                                          ), #div #CORR_user_input_table_div
-                                                                      column(width = 12, br()), #column
-                                                                      column(width = 5), #column
-                                                                      column(width = 2, 
-                                                                             actionButton(inputId = 'CORR_user_start', label = 'Start!', icon = icon('play')) #actionButton #CORR_user_start
-                                                                             ), #column
-                                                                      column(width = 5) #column
-                                                                      ) #div #CORR_user_mainPanel_div
-                                                                  ) #conditionalPanel
-                                                 ) #mainPanel
-                                       ), #sidebarLayout
-                         hr(),
+                                                                  shiny::conditionalPanel(condition='input.CORR_data_source == "CORR_user_data"',
+                                                                                          htmltools::div(id='CORR_user_reset_div',
+                                                                                                         shiny::fileInput(inputId='CORR_user_exp', label='Lipid expression data:', accept=c('.csv', '.tsv', '.xlsx'), multiple=FALSE) %>% #fileInput #CORR_user_exp
+                                                                                                           shinyhelper::helper(type="inline", title="Lipid abundance data", size ="l",
+                                                                                                                               content=c('<ol style="font-size: 0px;">',
+                                                                                                                                         '<li style="font-size: 16px;">The first column must contain a list of unique lipids name(features). </li>',
+                                                                                                                                         '<li style="font-size: 16px;">Other columns encompass the expressed values of groups under different conditions that you want to compare.</li>',
+                                                                                                                                         '<li style="font-size: 16px;">An example of ‘Lipid abundance data’</li>',
+                                                                                                                                         '</ol>',
+                                                                                                                                         '<img src="Description/CORR_Lipid expression data.webp" style="border:2px #ccc solid;padding:20px;" loading="lazy" width="100%"/>')),
+                                                                                                         shiny::fileInput(inputId='CORR_user_cond', label='Condition table:', accept=c('.csv', '.tsv', '.xlsx'), multiple=FALSE) %>% #fileInput #CORR_user_cond
+                                                                                                           shinyhelper::helper(type="inline", title="Condition table", size ="l",
+                                                                                                                               content=c('<ol style="font-size: 0px;">',
+                                                                                                                                         '<li style="font-size: 16px;">The condition table encompasses sample names and clinical conditions (disease status, gene dependence score etc.), which assigned each sample to a specific condition for further association analysis.</li>',
+                                                                                                                                         '<li style="font-size: 16px;">The first column must contain a list of samples name, MUST SAME AS THE SAMPLE NAME (COLUM NAMES) OF ‘Lipid abundance data’ !</li>',
+                                                                                                                                         '<li style="font-size: 16px;">Other columns are clinical conditions, such as Emphysema, Exacerbations. NOTE: ALL VALUES MUST BE NUMERIC</li>',
+                                                                                                                                         '<li style="font-size: 16px;">An example of ‘Condition table’</li>',
+                                                                                                                                         '</ol>',
+                                                                                                                                         '<img src="Description/CORR_Condition table.webp" style="border:2px #ccc solid;padding:20px;" loading="lazy" width="100%"/>')),
+                                                                                                         shiny::fileInput(inputId='CORR_user_adj', label='Adjusted table (optional):', accept=c('.csv', '.tsv', '.xlsx'), multiple=FALSE) %>% #fileInput #CORR_user_adj
+                                                                                                           shinyhelper::helper(type="inline", title="Adjusted table", size ="l",
+                                                                                                                               content=c('<ol style="font-size: 0px;">',
+                                                                                                                                         '<li style="font-size: 16px;">‘Adjusted table’ represents the user-defined variables that will be corrected in linear regression or logistic regression analysis, which can be the cancer types or the clinical information, like gender, age, or BMI.</li>',
+                                                                                                                                         '<li style="font-size: 16px;">The first column must contain a list of samples name, MUST SAME AS THE SAMPLE NAME (COLUM NAMES) OF ‘Lipid abundance data’ !</li>',
+                                                                                                                                         '<li style="font-size: 16px;">An example of ‘Adjusted table’:</li>',
+                                                                                                                                         '</ol>',
+                                                                                                                                         '<img src="Description/CORR_Adjusted table.webp" style="border:2px #ccc solid;padding:20px;" loading="lazy" width="100%"/>')),
+                                                                                                         shiny::helpText("Upload your data table in .csv/.tsv/.xlsx")), #helpText
+                                                                                          shiny::actionButton(inputId='CORR_user_reset', label='Reset', icon=shiny::icon('redo')), #actionButton #CORR_user_reset
+                                                                                          shiny::actionButton(inputId='CORR_user_upload', label='Upload', icon=shiny::icon('upload')) #actionButton #CORR_user_upload
+                                                                  ), #conditionalPanel
+                                                                  htmltools::br(),
+                                                                  htmltools::HTML("<a href='https://lipidsig.bioinfomics.org/FAQ/?FAQ5' onclick='show()' style='color: darkblue;'>How to prepare your dataset?</a>"),
+                                                                  htmltools::br(),
+                                                                  htmltools::HTML("<a href='https://lipidsig.bioinfomics.org/Tutorial/?Correlation' onclick='show()' style='color: darkblue;'>How to use this function?</a>")
+                                              ), #sidebarPanel
+                                              shiny::mainPanel(width=8,
+                                                               htmltools::div(id='CORR_data_check_progress', style='display:none;',
+                                                                              style="text-align:justify;background-color:AliceBlue;padding:15px;border-radius:10px",
+                                                                              shiny::htmlOutput("CORR_data_check_progress")
+                                                               ) ## div CORR_data_check_progress
+                                              ) #mainPanel
+                         ), #sidebarLayout
+                         htmltools::div(id='CORR_data_check_successful',style='display:none;',
+                                        htmltools::div(id='CORR_data_Uploaded',
+                                                       htmltools::h4(htmltools::strong('Uploaded data')),
+                                                       shiny::tabsetPanel(id='CORR_user_lipid_exp_tab',
+                                                                          shiny::tabPanel(title="Lipid abundance data", DT::dataTableOutput(outputId='CORR.raw.abundance') %>% shinycssloaders::withSpinner()), #tabPanel # Lipid abundance data
+                                                                          shiny::tabPanel(title="Condition table (clinical factor)",DT::dataTableOutput(outputId='CORR.cond.raw') %>% shinycssloaders::withSpinner()), #dataTableOutput #CORR.cond.raw
+                                                                          shiny::tabPanel(title="Adjusted table", DT::dataTableOutput(outputId='CORR.adj.raw') %>% shinycssloaders::withSpinner()) #dataTableOutput #CORR.adj.raw
+                                                                          ) ## tabsetPanel # CORR_user_lipid_exp_tab
+                                                       ),
+                                        htmltools::br(),
+                                        htmltools::div(id='CORR_data_warning_div',
+                                                       style='display:none;text-align:justify;background-color:AliceBlue;padding:15px;border-radius:10px',
+                                                       shiny::htmlOutput("CORR.Check.SE"),
+                                                       shiny::helpText(htmltools::tags$p(shiny::icon("check"),": Successfully uploaded.", style="font-size:16px;", htmltools::HTML('&nbsp;'), shiny::icon("times"), ": Error happaned. Please check your dataset.", htmltools::HTML('&nbsp;'), shiny::icon("exclamation"), ": Warning message.", style="font-size: 16px;")),
+                                                       htmltools::br()
+                                        ),
+                                        htmltools::br(),
+                                        htmltools::div(id='CORR_data_processing_div',
+                                                       style='display: none;background: #ecf0f1;border: 1px solid transparent;border-radius: 4px;height: 350px;',
+                                                       shiny::column(width=12,
+                                                                     htmltools::h3('Data processing')%>%
+                                                                       shinyhelper::helper(type="inline", title="Data processing", size ="l",
+                                                                                           content=c('<h4 style="font-size: 18px; text-align:left; line-height: 25px; color:darkblue;">
+                                                                                           <ul>
+                                                                                           <li>For detailed descriptions of missing values, sample normalization, and data transformation methods, please refer to the <a href="https://lipidsig.bioinfomics.org/FAQ/?FAQ13" target="_blank" style="color: red;">FAQ</a>.</li>
+                                                                                           </ul>
+                                                                                           </h4>',
+                                                                                                     '<ol style="font-size: 0px;">',
+                                                                                                     '<li style="font-size: 16px;">If you clicking on ‘Remove features with many missing values’, the threshold of the percentage of blank in the dataset that will be deleted can be defined by users.</li>',
+                                                                                                     '<img src="Description/Data processing_1.webp" loading="lazy" />',
+                                                                                                     '<li style="font-size: 16px;">The ‘Missing values imputation’ is for users to choose minimum, mean, and median to replace the missing values in the dataset.
+                                                                                                                           If users select minimum, minimum will be multiplied by the value of user inputted. After uploading data, three datasets will show on the right-hand side.
+                                                                                                                           When finishing checking data, click ‘Start’ for further analysis.</li>',
+                                                                                                     '<img src="Description/Data processing_2.webp" loading="lazy" />',
+                                                                                                     '<li style="font-size: 16px;">A variety of data transformation and normalization methods are available for selection. Use the drop-down menu to choose your preferred method.</li>',
+                                                                                                     '<img src="Description/Data processing_3.webp" loading="lazy" />',
+                                                                                                     '</ol>'))
+                                                       ), ## column 12
+                                                       column(width=12,
+                                                              shiny::column(width=4,
+                                                                            shiny::checkboxInput(inputId="CORR_rm_NA", label="Remove features with many missing values", value=TRUE), #checkboxInput #CORR_rm_NA
+                                                                            shiny::conditionalPanel(condition='input.CORR_rm_NA',
+                                                                                                    shiny::numericInput(inputId='CORR_filtration_param', label='More than % missing values',
+                                                                                                                        value=70, min=5, max=100, step=5)
+                                                                            ) #conditionalPanel
+                                                              ),## column 4
+                                                              shiny::column(width=4,
+                                                                            shiny::selectInput(inputId='CORR_fill_NA', label='Fill missing value with:',
+                                                                                               choices=c('Mean'='mean', 'Median'='median', 'Minimum'='min',
+                                                                                                         'Quantile regression imputation of left-censored data'='QRILC',
+                                                                                                         'Singular value decomposition'='SVD',
+                                                                                                         'K Nearest Neighbors'='KNN',
+                                                                                                         'International Risk Management Institute'='IRMI',
+                                                                                                         'Probabilistic principal component analysis'='PPCA',
+                                                                                                         'Bayesian. Principal Component Analysis'='BPCA'),
+                                                                                               selected='min', multiple=FALSE), ## selectInput CORR_fill_NA
+                                                                            shiny::conditionalPanel(condition='input.CORR_fill_NA == "min"',
+                                                                                                    shiny::numericInput(inputId='CORR_fill_min', label='Multiply by minimum',
+                                                                                                                        value=0.5, min=0.1, max=0.5, step=0.1)
+                                                                            ), ## conditionalPanel (If the user chooses fill missing value with Minimum)
+                                                                            shiny::conditionalPanel(condition='input.CORR_fill_NA == "QRILC"',
+                                                                                                    shiny::numericInput(inputId='CORR_fill_QRILC', label='Tune sigma',
+                                                                                                                        value=1, min=0.1, max=1, step=0.1)
+                                                                            ), ## conditionalPanel (If the user chooses fill missing value with QRILC)
+                                                                            shiny::conditionalPanel(condition="['SVD', 'PPCA', 'BPCA'].includes(input.CORR_fill_NA)",
+                                                                                                    shiny::numericInput(inputId='CORR_fill_param', label='nPCs',
+                                                                                                                        value=3, min=1, max=10, step=1)
+                                                                            ), ## conditionalPanel (If the user chooses fill missing value with SVD/PPCA/BPCA)
+                                                                            shiny::conditionalPanel(condition='input.CORR_fill_NA == "KNN"',
+                                                                                                    shiny::numericInput(inputId='CORR_fill_KNN', label='The number of neighbors',
+                                                                                                                        value=3, min=1, max=10, step=1)
+                                                                            ) ## conditionalPanel (If the user chooses fill missing value with KNN)
+                                                              ),## column 4
+                                                              shiny::column(width=4,
+                                                                            htmltools::h4('Data Normalization'),
+                                                                            shiny::selectInput(inputId='CORR_normalization', label='Normalization with:', 
+                                                                                               choices=c('None'='none', 
+                                                                                                         'Percentage'='Percentage',
+                                                                                                         'Probabilistic Quotient Normalization'='PQN',
+                                                                                                         'Quantile normalization'='Quantile',
+                                                                                                         'Normalization by sum'='Sum',
+                                                                                                         'Normalization by median'='Median'),
+                                                                                               selected='Percentage', multiple=FALSE),
+                                                                            htmltools::h4('Data Transformation'),
+                                                                            shiny::selectInput(inputId='CORR_transformation',
+                                                                                               label='Transformation with:',
+                                                                                               choices=c('None'='none',
+                                                                                                         'log10'='log10',
+                                                                                                         'Square root'='square',
+                                                                                                         'Cube root'='cube'),
+                                                                                               selected='log10', multiple=FALSE)
+                                                              ),## column 4
+                                                       ), ## column 12
+                                                       shiny::column(width=12,
+                                                                     shiny::column(width=7),
+                                                                     shiny::column(width=3, shiny::actionButton(inputId='CORR_processing_reset', label='Reset processing method', icon=shiny::icon('redo'))), #actionButton #CORR_user_reset
+                                                                     shiny::column(width=2, shiny::actionButton(inputId='CORR_processing_start', label='Processing', icon=shiny::icon('play'))) #actionButton #CORR_user_upload
+                                                       ) ## column 12
+                                        ), ## div # CORR_data_processing_div
+                                        htmltools::br(),
+                                        htmltools::div(id='CORR_data_summary_div',style='display:none;',
+                                                       style="display:none;text-align:justify;background-color:AliceBlue;padding:15px;border-radius:10px",
+                                                       shiny::htmlOutput("CORR.data.summary")
+                                        ), ## div CORR_data_summary_div
+                                        htmltools::br(),
+                                        htmltools::div(id='CORR_data_process_table_div',style='display:none;',
+                                                       htmltools::h3(strong('Processed data')),
+                                                       htmltools::div(style="text-align:justify;background-color:AliceBlue;padding:15px;border-radius:10px",
+                                                                      htmltools::HTML('<h4 style="font-size: 18px; text-align:left; line-height: 30px; color:black;">
+                                                                                       <ul>
+                                                                                       <li><strong>Processed abundance data</strong>: User-uploaded abundance data after data processing.</li> 
+                                                                                       <li><strong>Condition table (clinical factor)</strong>: User-uploaded condition table.</li>
+                                                                                       <li><strong>Adjusted table (if provided)</strong>: User-uploaded adjusted table.</li>
+                                                                                       <li><strong>Lipid characteristics</strong>: Lipid characteristics converted according to the uploaded lipids in the abundance data. Detailed information about the converted characteristics can be found in the <a href="https://lipidsig.bioinfomics.org/FAQ/?FAQ11" target="_blank" style="color: darkblue;">FAQ</a>.</li>
+                                                                                       <li><strong>Lipid id</strong>: Links to the LION ID, LIPID MAPS ID, and other resource IDs for the uploaded lipids.</li>
+                                                                                       <li><strong>Data quality</strong>: Box and density plots of the abundance data before and after data processing.</li>
+                                                                                       </ul></h4>')
+                                                       ),## div 
+                                                       htmltools::br(),
+                                                       shiny::tabsetPanel(id='CORR_user_process_table_tab',
+                                                                          shiny::tabPanel(title="Processed abundance data", DT::dataTableOutput(outputId='CORR.processed.abundance') %>% shinycssloaders::withSpinner()), #dataTableOutput #CORR.processed.abundance
+                                                                          shiny::tabPanel(title="Condition table (clinical factor)", DT::dataTableOutput(outputId='CORR.processed.cond') %>% shinycssloaders::withSpinner()), #dataTableOutput #CORR.processed.cond
+                                                                          shiny::tabPanel(title="Adjusted table", DT::dataTableOutput(outputId='CORR.processed.adj') %>% shinycssloaders::withSpinner()), #dataTableOutput #CORR.adj.process
+                                                                          shiny::tabPanel(title="Lipid characteristics", DT::dataTableOutput(outputId='CORR.processed.lipid.char') %>% shinycssloaders::withSpinner()), #dataTableOutput #CORR.user.exp
+                                                                          shiny::tabPanel(title="Lipid id", DT::dataTableOutput(outputId='CORR.lipid.id') %>% shinycssloaders::withSpinner()), #dataTableOutput #CORR.user.exp
+                                                                          shiny::tabPanel(title="Data quality",
+                                                                                          style='height:900px;',
+                                                                                          shiny::column(width=12,htmltools::br()),
+                                                                                          shiny::column(width=12,
+                                                                                                        shiny::column(width=5),
+                                                                                                        shiny::column(width=2, style='padding: 0px;',
+                                                                                                                      shiny::actionButton("CORR.processed.download.start", "Download PDF", icon=shiny::icon("download"))),
+                                                                                                        shiny::column(width=5,downloadButton("CORR.processed.download", "Download", style="visibility: hidden;"))
+                                                                                          ), ## column 12
+                                                                                          shiny::column(width=12, htmltools::br()),
+                                                                                          shiny::column(width=12,
+                                                                                                        shiny::column(width=6, plotly::plotlyOutput(outputId='CORR.before.processed.boxplot') %>% shinycssloaders::withSpinner()),
+                                                                                                        shiny::column(width=6, plotly::plotlyOutput(outputId='CORR.after.processed.boxplot') %>% shinycssloaders::withSpinner())
+                                                                                          ), ## column 12
+                                                                                          shiny::column(width=12, htmltools::br()),
+                                                                                          shiny::column(width=12,
+                                                                                                        shiny::column(width=6, plotly::plotlyOutput(outputId='CORR.before.processed.density') %>% shinycssloaders::withSpinner()),
+                                                                                                        shiny::column(width=6, plotly::plotlyOutput(outputId='CORR.after.processed.density') %>% shinycssloaders::withSpinner())
+                                                                                          ) ## column 12
+                                                                          ) ## tabPanel # Data quality
+                                                       ) #tabsetPanel
+                                        )## div # CORR_data_process_table_div
+                         ), ## div # CORR_data_check_successful
+                         htmltools::br(),
+                         htmltools::div(id='CORR_start_div',style='display:none;height:50px;',
+                                        shiny::column(width=5), #column
+                                        shiny::column(width=2, shiny::actionButton(inputId='CORR_start', label='Start!', icon=shiny::icon('play'))), #actionButton #CORR_user_start
+                                        shiny::column(width=5) #column
+                         ), ## div CORR_start_div
+                         htmltools::hr(),
                          ####################################
                          ####  Correlation analysis tab  ####
                          ####################################
-                         div(id = 'CORR_tabPanel_div',
-                             div(id = 'CORR_result_div', 
-                                 h2('Result'),
-                                 ), #div #CORR_result_div
-                             conditionalPanel(condition = '(input.CORR_data_source == "CORR_demo_data" & input.CORR_demo_cont_start) | 
-                                          (input.CORR_data_source == "CORR_user_data" & input.CORR_user_start)',
-                                              tabsetPanel(id = 'CORR_analysis_tab', 
-                                                          tabPanel(title = 'Lipid species analysis', 
-                                                                   br(),
-                                                                   navlistPanel(widths = c(3, 9), 
-                                                                                id = 'CORR_species_list',
-                                                                                #######################
-                                                                                ####  Correlation  ####
-                                                                                #######################
-                                                                                tabPanel(title = 'Correlation', 
-                                                                                         h3('Correlation'), 
-                                                                                         column(width = 12,
-                                                                                                div(id = 'CORR_species_description_style_div',
-                                                                                                    h6('The Correlation Coefficient gives a summary view that tells researchers whether a relationship exists between clinical features and lipid species,
-                                                                                               how strong that relationship is and whether the relationship is positive or negative. Here we provide three types of correlations, Pearson, Spearman, and Kendall,
-                                                                                               and adjusted by Benjamini & Hochberg methods. The cut-offs for correlation coefficient and the p-value can be decided by users.'),
-                                                                                                    h6('A heatmap will show after users inputting cut-offs and choosing a value for clustering/methods for clustering.
-                                                                                               Users can use either correlation coefficient between clinical features (e.g. genes) and lipid species or choose their statistic instead.'),
-                                                                                                    style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px"),
-                                                                                                br(),
-                                                                                                div(id = 'CORR_species_corr_style_div', 
-                                                                                                    div(id = 'CORR_species_corr_reset_div', 
-                                                                                                        column(width = 4, 
-                                                                                                               selectInput(inputId = 'CORR_species_corr_method', 
-                                                                                                                           label = 'Correlation method:', 
-                                                                                                                           choices = c('Pearson' = 'pearson', 
-                                                                                                                                       #'Kendall'='kendall',
-                                                                                                                                       'Spearman' = 'spearman'), 
-                                                                                                                           selected = 'pearson', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_species_corr_method
-                                                                                                               radioButtons(inputId = 'CORR_species_corr_adj_stat_method', 
-                                                                                                                            label = 'Multiple testing correction:', 
-                                                                                                                            choices = c('Benjamini & Hochberg' = 'BH'), 
-                                                                                                                            selected = 'BH', 
-                                                                                                                            inline = F
-                                                                                                               ) #radioButtons #CORR_species_corr_adj_stat_method
-                                                                                                        ), #column
-                                                                                                        column(width = 4, 
-                                                                                                               selectInput(inputId = 'CORR_species_corr_sig_p', 
-                                                                                                                           label = 'Identify significant lipids:', 
-                                                                                                                           choices = c('p-value' = 'p', 
-                                                                                                                                       'adjusted p-value' = 'p.adj'), 
-                                                                                                                           selected = 'p.adj', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_species_corr_sig_p
-                                                                                                               numericInput(inputId = 'CORR_species_corr_pval', 
-                                                                                                                            label = 'p-value:', 
-                                                                                                                            value = 1, 
-                                                                                                                            min = 0, 
-                                                                                                                            max = 1
-                                                                                                               ), #numericInput #CORR_species_corr_pval
-                                                                                                               numericInput(inputId = 'CORR_species_corr_coef', 
-                                                                                                                            label = 'Correlation coefficient cutoff:', 
-                                                                                                                            value = 0, 
-                                                                                                                            min = 0, 
-                                                                                                                            max = 1, 
-                                                                                                                            step = 0.1
-                                                                                                               ) %>% #numericInput #CORR_species_corr_coef
-                                                                                                                 helper(type = "inline",
-                                                                                                                        title = "Cutoff of correlation coefficient Help",
-                                                                                                                        content = c("A coefficient of <0.1 indicates a negligible and >0.9 a very strong relationship, values in-between are disputable.")) ,
-                                                                                                        ), #column
-                                                                                                        column(width = 4, 
-                                                                                                               radioButtons(inputId = 'CORR_species_corr_color', 
-                                                                                                                            label = 'Value for clustering:', 
-                                                                                                                            choices = c('correlation coefficient' = 'cor_coef', 
-                                                                                                                                        'statistics' = 'statistic'), 
-                                                                                                                            selected = 'statistic', 
-                                                                                                                            inline = F
-                                                                                                               ), #radioButtons #CORR_species_corr_color
-                                                                                                               selectInput(inputId = 'CORR_species_corr_dist', 
-                                                                                                                           label = 'Distance measure:', 
-                                                                                                                           choices = c('Pearson' = 'pearson', 
-                                                                                                                                       'Spearman' = 'spearman', 
-                                                                                                                                       'Kendall'='kendall',
-                                                                                                                                       "Euclidean" = "euclidean",
-                                                                                                                                       "Maximum" = "maximum",
-                                                                                                                                       "Manhattan" = "manhattan",
-                                                                                                                                       "Canberra" = "canberra",
-                                                                                                                                       "Binary" = "binary",
-                                                                                                                                       "Minkowski" = "minkowski"),
-                                                                                                                           selected = 'spearman', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_species_corr_dist
-                                                                                                               selectInput(inputId = 'CORR_species_corr_hclust', 
-                                                                                                                           label = 'Clustering method:', 
-                                                                                                                           choices = c('Complete' = 'complete', 
-                                                                                                                                       'Single' = 'single', 
-                                                                                                                                       'Median'='median', 
-                                                                                                                                       'Average' = 'average', 
-                                                                                                                                       "Ward.D" = "ward.D",
-                                                                                                                                       "Ward.D2" = "ward.D2",
-                                                                                                                                       "WPGMA" = "mcquitty",
-                                                                                                                                       "WOGMC" = "median",
-                                                                                                                                       "UPGMC" = "centroid"), 
-                                                                                                                           selected = 'average', 
-                                                                                                                           multiple = F
-                                                                                                               ) #selectInput #CORR_species_corr_hclust
-                                                                                                        ) #column
-                                                                                                    ), #div #CORR_species_corr_reset_div
-                                                                                                    column(width = 12),
-                                                                                                    column(width = 4),
-                                                                                                    column(width = 8, 
-                                                                                                           actionButton(inputId = 'CORR_species_corr_reset', 
-                                                                                                                        label = 'Reset', icon = icon('redo')
-                                                                                                           ), #actionButton #CORR_species_corr_reset
-                                                                                                           actionButton(inputId = 'CORR_species_corr_start', 
-                                                                                                                        label = 'Submit', icon = icon('play')
-                                                                                                           ) #actionButton #CORR_species_corr_start
-                                                                                                    ), #column
-                                                                                                    style="text-align:justify;background-color:HoneyDew;padding:15px;border-radius:10px;height:320px"
-                                                                                                ), #div #CORR_species_corr_style_div
-                                                                                                br(),
-                                                                                                conditionalPanel(condition = 'input.CORR_species_corr_start',
-                                                                                                                 div(id = 'CORR_species_corr_result_div', 
-                                                                                                                     column(width = 12,
-                                                                                                                            iheatmaprOutput(outputId = 'CORR.species.corr.heatmap', height = '100%') %>% withSpinner(), #plotlyOutput #CORR.species.corr.heatmap
-                                                                                                                            br(),
-                                                                                                                            column(width = 4),
-                                                                                                                            column(width = 8,
-                                                                                                                                   downloadButton(outputId = 'CORR.species.corr.heatmap.matrix', label = 'Download matrix'),
-                                                                                                                                   br(),
-                                                                                                                                   br(),
-                                                                                                                                   br(),
-                                                                                                                                   br()
-                                                                                                                            ) #column
-                                                                                                                     ) #column
-                                                                                                                 ) #div #CORR_species_corr_result_div
-                                                                                                ) #conditionalPanel
-                                                                                         ) #column
-                                                                                ), #tabPanel #Correlation
-                                                                                #############################
-                                                                                ####  Linear regression  ####
-                                                                                #############################
-                                                                                tabPanel(title = 'Linear regression', 
-                                                                                         h3('Linear regression'), 
-                                                                                         column(width = 12,
-                                                                                                h6('Linear regression is a statistical technique that uses several explanatory variables to predict the outcome of a continuous response variable,
-                                                                                               allowing researchers to estimate the associations between lipid levels and clinical features.
-                                                                                               For multiple linear regression analysis, additional variables in ‘adjusted table’ will be added into the algorithm and used to adjust the confounding effect.
-                                                                                               Once calculation completes, each lipid species will be assigned a beta coefficient and t statistic (p-value), which can be chosen for clustering.', 
-                                                                                                   style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px"),
-                                                                                                br(),
-                                                                                                div(id = 'CORR_species_linear_style_div', 
-                                                                                                    div(id = 'CORR_species_linear_reset_div', 
-                                                                                                        column(width = 4, 
-                                                                                                               #textOutput(outputId = 'CORR.species.linear.adj.factor'), #textOutput #CORR.species.linear.adj.factor
-                                                                                                               radioButtons(inputId = 'CORR_species_linear_adj_stat_method', 
-                                                                                                                            label = 'Multiple testing correction:', 
-                                                                                                                            choices = c('Benjamini & Hochberg' = 'BH'), 
-                                                                                                                            selected = 'BH', 
-                                                                                                                            inline = T
-                                                                                                               ) #radioButtons #CORR_species_linear_adj_stat_method
-                                                                                                        ), #column
-                                                                                                        column(width = 4, 
-                                                                                                               selectInput(inputId = 'CORR_species_linear_sig_p', 
-                                                                                                                           label = 'Identify significant lipids:', 
-                                                                                                                           choices = c('p-value' = 'p', 
-                                                                                                                                       'adjusted p-value' = 'p.adj'), 
-                                                                                                                           selected = 'p', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_species_linear_sig_p
-                                                                                                               numericInput(inputId = 'CORR_species_linear_pval', 
-                                                                                                                            label = 'p-value:', 
-                                                                                                                            value = 1, 
-                                                                                                                            min = 0, 
-                                                                                                                            max = 1
-                                                                                                               ) #numericInput #CORR_species_linear_pval
-                                                                                                        ), #column
-                                                                                                        column(width = 4, 
-                                                                                                               radioButtons(inputId = 'CORR_species_linear_color', 
-                                                                                                                            label = 'Value for clustering:', 
-                                                                                                                            choices = c('beta coefficient' = 'beta_coef', 
-                                                                                                                                        't statistics' = 't_statistic'), 
-                                                                                                                            selected = 't_statistic', 
-                                                                                                                            inline = T
-                                                                                                               ), #radioButtons #CORR_species_linear_color
-                                                                                                               selectInput(inputId = 'CORR_species_linear_dist', 
-                                                                                                                           label = 'Distance measure:', 
-                                                                                                                           choices = c('Pearson' = 'pearson', 
-                                                                                                                                       'Spearman' = 'spearman', 
-                                                                                                                                       'Kendall'='kendall',
-                                                                                                                                       "Euclidean" = "euclidean",
-                                                                                                                                       "Maximum" = "maximum",
-                                                                                                                                       "Manhattan" = "manhattan",
-                                                                                                                                       "Canberra" = "canberra",
-                                                                                                                                       "Binary" = "binary",
-                                                                                                                                       "Minkowski" = "minkowski"),
-                                                                                                                           selected = 'pearson', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_species_linear_dist
-                                                                                                               selectInput(inputId = 'CORR_species_linear_hclust', 
-                                                                                                                           label = 'Clustering method:', 
-                                                                                                                           choices = c('Complete' = 'complete', 
-                                                                                                                                       'Single' = 'single', 
-                                                                                                                                       'Median'='median', 
-                                                                                                                                       'Average' = 'average', 
-                                                                                                                                       "Ward.D" = "ward.D",
-                                                                                                                                       "Ward.D2" = "ward.D2",
-                                                                                                                                       "WPGMA" = "mcquitty",
-                                                                                                                                       "WOGMC" = "median",
-                                                                                                                                       "UPGMC" = "centroid"), 
-                                                                                                                           selected = 'centroid', 
-                                                                                                                           multiple = F
-                                                                                                               ) #selectInput #CORR_species_linear_hclust
-                                                                                                        ) #column
-                                                                                                    ), #div #CORR_species_linear_reset_div
-                                                                                                    column(width = 12),
-                                                                                                    column(width = 4),
-                                                                                                    column(width = 8, 
-                                                                                                           actionButton(inputId = 'CORR_species_linear_reset', 
-                                                                                                                        label = 'Reset', icon = icon('redo')
-                                                                                                           ), #actionButton #CORR_species_linear_reset
-                                                                                                           actionButton(inputId = 'CORR_species_linear_start', 
-                                                                                                                        label = 'Submit', icon = icon('play')
-                                                                                                           ) #actionButton #CORR_species_linear_start
-                                                                                                    ), #column
-                                                                                                    style="text-align:justify;background-color:HoneyDew;padding:15px;border-radius:10px;height:290px"
-                                                                                                ), #div #CORR_species_linear_style_div
-                                                                                                br(),
-                                                                                                conditionalPanel(condition = 'input.CORR_species_linear_start',
-                                                                                                                 div(id = 'CORR_species_linear_result_div', 
-                                                                                                                     column(width = 12,
-                                                                                                                            iheatmaprOutput(outputId = 'CORR.species.linear.heatmap', height = '100%') %>% withSpinner(), #plotlyOutput #CORR.species.linear.heatmap
-                                                                                                                            br(),
-                                                                                                                            column(width = 4),
-                                                                                                                            column(width = 8,
-                                                                                                                                   downloadButton(outputId = 'CORR.species.linear.heatmap.matrix', label = 'Download matrix'),
-                                                                                                                                   br(),
-                                                                                                                                   br(),
-                                                                                                                                   br(),
-                                                                                                                                   br()
-                                                                                                                            ) #column
-                                                                                                                     ) #column
-                                                                                                                 ) #div #CORR_species_linear_result_div
-                                                                                                ) #conditionalPanel
-                                                                                         ) #column
-                                                                                ) #tabPanel #Linear regression
-                                                                   ) #navlistPanel
-                                                          ), #tabPanel #Lipid species analysis
-                                                          tabPanel(title = 'Lipid characteristics analysis', 
-                                                                   br(),
-                                                                   navlistPanel(widths = c(3, 9), 
-                                                                                id = 'CORR_class_list',
-                                                                                #######################
-                                                                                ####  Correlation  ####
-                                                                                #######################
-                                                                                tabPanel(title = 'Correlation', 
-                                                                                         h3('Correlation'), 
-                                                                                         column(width = 12,
-                                                                                                div(id = 'CORR_class_description_style_div',
-                                                                                                    h6('The Correlation Coefficient gives a summary view that tells researchers whether a relationship exists between clinical features and user-defined lipid characteristics,
-                                                                                                   how strong that relationship is and whether the relationship is positive or negative. Here we provide three types of correlations, Pearson, Spearman, and Kendall,
-                                                                                                   and adjusted by Benjamini & Hochberg methods. The cut-offs for correlation coefficient and the p-value can be decided by users. '),
-                                                                                                    h6('A heatmap will show after users inputting cut-offs and choosing a value for clustering/methods for clustering.
-                                                                                                   Users can use either correlation coefficient between clinical features (e.g. genes) and lipid characteristics or choose their statistic instead.'),
-                                                                                                    style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px"),
-                                                                                                br(),
-                                                                                                div(id = 'CORR_class_corr_style_div', 
-                                                                                                    div(id = 'CORR_class_corr_reset_div', 
-                                                                                                        column(width = 4, 
-                                                                                                               selectInput(inputId = 'CORR_class_corr_lipid_char', 
-                                                                                                                           label = 'Select the lipid characteristic:', 
-                                                                                                                           choices = 'class', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_class_corr_lipid_char
-                                                                                                               selectInput(inputId = 'CORR_class_corr_method', 
-                                                                                                                           label = 'Correlation method:', 
-                                                                                                                           choices = c('Pearson' = 'pearson', 
-                                                                                                                                       #'Kendall'='kendall',
-                                                                                                                                       'Spearman' = 'spearman'), 
-                                                                                                                           selected = 'pearson', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_class_corr_method
-                                                                                                               radioButtons(inputId = 'CORR_class_corr_adj_stat_method', 
-                                                                                                                            label = 'Multiple testing correction:', 
-                                                                                                                            choices = c('Benjamini & Hochberg' = 'BH'), 
-                                                                                                                            selected = 'BH', 
-                                                                                                                            inline = T
-                                                                                                               ) #radioButtons #CORR_class_corr_adj_stat_method
-                                                                                                        ), #column
-                                                                                                        column(width = 4, 
-                                                                                                               selectInput(inputId = 'CORR_class_corr_sig_p', 
-                                                                                                                           label = 'Identify significant lipids:', 
-                                                                                                                           choices = c('p-value' = 'p', 
-                                                                                                                                       'adjusted p-value' = 'p.adj'), 
-                                                                                                                           selected = 'p.adj', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_class_corr_sig_p
-                                                                                                               numericInput(inputId = 'CORR_class_corr_pval', 
-                                                                                                                            label = 'p-value:', 
-                                                                                                                            value = 1, 
-                                                                                                                            min = 0, 
-                                                                                                                            max = 1
-                                                                                                               ), #numericInput #CORR_class_corr_pval
-                                                                                                               numericInput(inputId = 'CORR_class_corr_coef', 
-                                                                                                                            label = 'Correlation coefficient cutoff:', 
-                                                                                                                            value = 0, 
-                                                                                                                            min = 0, 
-                                                                                                                            max = 1, 
-                                                                                                                            step = 0.1
-                                                                                                               )%>% #numericInput #CORR_class_corr_coef
-                                                                                                                 helper(type = "inline",
-                                                                                                                        title = "Cutoff of correlation coefficientg Help",
-                                                                                                                        content = c("A coefficient of <0.1 indicates a negligible and >0.9 a very strong relationship, values in-between are disputable."))
-                                                                                                        ), #column
-                                                                                                        column(width = 4, 
-                                                                                                               radioButtons(inputId = 'CORR_class_corr_color', 
-                                                                                                                            label = 'Value for clustering:', 
-                                                                                                                            choices = c('correlation coefficient' = 'cor_coef', 
-                                                                                                                                        'statistics' = 'statistic'), 
-                                                                                                                            selected = 'statistic', 
-                                                                                                                            inline = F
-                                                                                                               ), #radioButtons #CORR_class_corr_color
-                                                                                                               selectInput(inputId = 'CORR_class_corr_dist', 
-                                                                                                                           label = 'Distance measure:', 
-                                                                                                                           choices = c('Pearson' = 'pearson', 
-                                                                                                                                       'Spearman' = 'spearman', 
-                                                                                                                                       'Kendall'='kendall',
-                                                                                                                                       "Euclidean" = "euclidean",
-                                                                                                                                       "Maximum" = "maximum",
-                                                                                                                                       "Manhattan" = "manhattan",
-                                                                                                                                       "Canberra" = "canberra",
-                                                                                                                                       "Binary" = "binary",
-                                                                                                                                       "Minkowski" = "minkowski"),
-                                                                                                                           selected = 'spearman', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_class_corr_dist
-                                                                                                               selectInput(inputId = 'CORR_class_corr_hclust', 
-                                                                                                                           label = 'Clustering method:', 
-                                                                                                                           choices = c('Complete' = 'complete', 
-                                                                                                                                       'Single' = 'single', 
-                                                                                                                                       'Median'='median', 
-                                                                                                                                       'Average' = 'average', 
-                                                                                                                                       "Ward.D" = "ward.D",
-                                                                                                                                       "Ward.D2" = "ward.D2",
-                                                                                                                                       "WPGMA" = "mcquitty",
-                                                                                                                                       "WOGMC" = "median",
-                                                                                                                                       "UPGMC" = "centroid"), 
-                                                                                                                           selected = 'average', 
-                                                                                                                           multiple = F
-                                                                                                               ) #selectInput #CORR_class_corr_hclust
-                                                                                                        ) #column
-                                                                                                    ), #div #CORR_class_corr_reset_div
-                                                                                                    column(width = 12),
-                                                                                                    column(width = 4),
-                                                                                                    column(width = 8, 
-                                                                                                           actionButton(inputId = 'CORR_class_corr_reset', 
-                                                                                                                        label = 'Reset', icon = icon('redo')
-                                                                                                           ), #actionButton #CORR_class_corr_reset
-                                                                                                           actionButton(inputId = 'CORR_class_corr_start', 
-                                                                                                                        label = 'Submit', icon = icon('play')
-                                                                                                           ) #actionButton #CORR_class_corr_start
-                                                                                                    ), #column
-                                                                                                    style="text-align:justify;background-color:HoneyDew;padding:15px;border-radius:10px;height:320px"
-                                                                                                ), #div #CORR_class_corr_style_div
-                                                                                                br(),
-                                                                                                conditionalPanel(condition = 'input.CORR_class_corr_start',
-                                                                                                                 div(id = 'CORR_class_corr_result_div', 
-                                                                                                                     column(width = 12,
-                                                                                                                            iheatmaprOutput(outputId = 'CORR.class.corr.heatmap', height = '100%') %>% withSpinner(), #plotlyOutput #CORR.class.corr.heatmap
-                                                                                                                            br(),
-                                                                                                                            column(width = 4),
-                                                                                                                            column(width = 8,
-                                                                                                                                   downloadButton(outputId = 'CORR.class.corr.heatmap.matrix', label = 'Download matrix'), 
-                                                                                                                                   br(),
-                                                                                                                                   br(),
-                                                                                                                                   br(),
-                                                                                                                                   br()
-                                                                                                                            ) #column
-                                                                                                                     ) #column
-                                                                                                                 ) #div #CORR_class_corr_result_div
-                                                                                                ) #conditionalPanel
-                                                                                         ) #column
-                                                                                ), #tabPanel #Correlation
-                                                                                #############################
-                                                                                ####  Linear regression  ####
-                                                                                #############################
-                                                                                tabPanel(title = 'Linear regression', 
-                                                                                         h3('Linear regression'), 
-                                                                                         column(width = 12,
-                                                                                                h6(p("Multiple linear regression is a statistical technique that uses several explanatory variables to predict the outcome of a response variable,
+                         htmltools::div(id='CORR_tabPanel_div',style='display:none;',
+                                        htmltools::h2('Result'),
+                                        shiny::tabsetPanel(id='CORR_analysis_tab',
+                                                           shiny::tabPanel(title='Lipid species analysis',
+                                                                           htmltools::br(),
+                                                                           shiny::navlistPanel(widths=c(3, 9),
+                                                                                               id='CORR_species_list',
+                                                                                               #######################
+                                                                                               ####  Correlation  ####
+                                                                                               #######################
+                                                                                               shiny::tabPanel(title='Correlation',
+                                                                                                               htmltools::h3('Correlation'),
+                                                                                                               shiny::column(width=12,
+                                                                                                                             htmltools::div(htmltools::h6('The Correlation Coefficient gives a summary view that tells researchers whether a relationship exists between clinical features and lipid species,
+                                                                                                               how strong that relationship is and whether the relationship is positive or negative. Here we provide three types of correlations, Pearson, Spearman, and Kendall,
+                                                                                                                                            and adjusted by Benjamini & Hochberg methods. The cut-offs for correlation coefficient and the p-value can be decided by users.'),
+                                                                                                                                            htmltools::h6('A heatmap will show after users inputting cut-offs and choosing a value for clustering/methods for clustering.
+                                                                                                                                                          Users can use either correlation coefficient between clinical features (e.g. genes) and lipid species or choose their statistic instead.'),
+                                                                                                                                            style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px"),
+                                                                                                                             htmltools::br(),
+                                                                                                                             htmltools::div(id='CORR_species_corr_style_div',
+                                                                                                                                            style="text-align:justify;background-color:HoneyDew;padding:15px;border-radius:10px;height:320px",
+                                                                                                                                            htmltools::div(id='CORR_species_corr_reset_div',
+                                                                                                                                                           shiny::column(width=12,
+                                                                                                                                                                         shiny::column(width=4,
+                                                                                                                                                                                       shiny::selectInput(inputId='CORR_species_corr_method', label='Correlation method:',
+                                                                                                                                                                                                          choices=c('Pearson'='pearson',
+                                                                                                                                                                                                                    'Spearman'='spearman'),
+                                                                                                                                                                                                          selected='pearson', multiple=FALSE), #selectInput #CORR_species_corr_method
+                                                                                                                                                                                       shiny::radioButtons(inputId='CORR_species_corr_adj_stat_method', label='Multiple testing correction:',
+                                                                                                                                                                                                           choices=c('Benjamini & Hochberg'='BH'),
+                                                                                                                                                                                                           selected='BH', inline=FALSE), #radioButtons #CORR_species_corr_adj_stat_method
+                                                                                                                                                                                       shiny::uiOutput("CORR.species.corr.sidecolor")
+                                                                                                                                                                         ), ## column 4
+                                                                                                                                                                         shiny::column(width=4,
+                                                                                                                                                                                       shiny::selectInput(inputId='CORR_species_corr_sig_p', label='Identify significant lipids:',
+                                                                                                                                                                                                          choices=c('p-value'='pval',
+                                                                                                                                                                                                                    'adjusted p-value'='padj'),
+                                                                                                                                                                                                          selected='padj', multiple=FALSE), #selectInput #CORR_species_corr_sig_p
+                                                                                                                                                                                       shiny::numericInput(inputId='CORR_species_corr_pval', label='p-value:',
+                                                                                                                                                                                                           value=1, min=0.001, max=1, step=0.001), #numericInput #CORR_species_corr_pval
+                                                                                                                                                                                       shiny::numericInput(inputId='CORR_species_corr_coef', label='Correlation coefficient cutoff:',
+                                                                                                                                                                                                           value=0, min=0, max=1, step=0.1 ) %>% #numericInput #CORR_species_corr_coef
+                                                                                                                                                                                         shinyhelper::helper(type="inline", title="Cutoff of correlation coefficient Help",
+                                                                                                                                                                                                             content=c("A coefficient of <0.1 indicates a negligible and >0.9 a very strong relationship, values in-between are disputable.")),
+                                                                                                                                                                         ), ## column 4
+                                                                                                                                                                         shiny::column(width=4,
+                                                                                                                                                                                       shiny::radioButtons(inputId='CORR_species_corr_color', label='Value for clustering:',
+                                                                                                                                                                                                           choices=c('correlation coefficient'='cor_coef',
+                                                                                                                                                                                                                     'statistics'='statistic'),
+                                                                                                                                                                                                           selected='cor_coef', inline=FALSE), #radioButtons #CORR_species_corr_color
+                                                                                                                                                                                       shiny::selectInput(inputId='CORR_species_corr_dist', label='Distance measure:',
+                                                                                                                                                                                                          choices=c('Pearson'='pearson',
+                                                                                                                                                                                                                    'Spearman'='spearman',
+                                                                                                                                                                                                                    'Kendall'='kendall'),
+                                                                                                                                                                                                                    #"Euclidean"="euclidean",
+                                                                                                                                                                                                                    #"Maximum"="maximum",
+                                                                                                                                                                                                                    #"Manhattan"="manhattan",
+                                                                                                                                                                                                                    #"Canberra"="canberra",
+                                                                                                                                                                                                                    #"Binary"="binary",
+                                                                                                                                                                                                                    #"Minkowski"="minkowski"),
+                                                                                                                                                                                                          selected='spearman', multiple=FALSE), #selectInput #CORR_species_corr_dist
+                                                                                                                                                                                       shiny::selectInput(inputId='CORR_species_corr_hclust', label='Clustering method:',
+                                                                                                                                                                                                          choices=c('Complete'='complete',
+                                                                                                                                                                                                                    'Single'='single',
+                                                                                                                                                                                                                    'Median'='median',
+                                                                                                                                                                                                                    'Average'='average',
+                                                                                                                                                                                                                    "Ward.D"="ward.D",
+                                                                                                                                                                                                                    "Ward.D2"="ward.D2",
+                                                                                                                                                                                                                    "WPGMA"="mcquitty",
+                                                                                                                                                                                                                    "WOGMC"="median",
+                                                                                                                                                                                                                    "UPGMC"="centroid"),
+                                                                                                                                                                                                          selected='average', multiple=FALSE) #selectInput #CORR_species_corr_hclust
+                                                                                                                                                                         ) ## column 4
+                                                                                                                                                           ) ## column 12
+                                                                                                                                            ), #div #CORR_species_corr_reset_divs
+                                                                                                                                            shiny::column(width=12),
+                                                                                                                                            shiny::column(width=12,
+                                                                                                                                                          shiny::column(width=4),
+                                                                                                                                                          shiny::column(width=8, 
+                                                                                                                                                                        shiny::actionButton(inputId='CORR_species_corr_reset', label='Reset', icon=shiny::icon('redo')), #actionButton #CORR_species_corr_reset
+                                                                                                                                                                        shiny::actionButton(inputId='CORR_species_corr_start', label='Submit', icon=shiny::icon('play')) #actionButton #CORR_species_corr_start
+                                                                                                                                                          ) ## column 8
+                                                                                                                                            ) ## column 12
+                                                                                                                             ), #div #CORR_species_corr_style_div
+                                                                                                                             htmltools::br()
+                                                                                                               ) ## column 12
+                                                                                               ), #tabPanel #Correlation
+                                                                                               #############################
+                                                                                               ####  Linear regression  ####
+                                                                                               #############################
+                                                                                               shiny::tabPanel(title='Linear regression',
+                                                                                                               htmltools::h3('Linear regression'),
+                                                                                                               shiny::column(width=12,
+                                                                                                                             htmltools::h6('Linear regression is a statistical technique that uses several explanatory variables to predict the outcome of a continuous response variable,
+                                                                                                                             allowing researchers to estimate the associations between lipid levels and clinical features.
+                                                                                                                             For multiple linear regression analysis, additional variables in ‘adjusted table’ will be added into the algorithm and used to adjust the confounding effect.
+                                                                                                                                           Once calculation completes, each lipid species will be assigned a beta coefficient and t statistic (p-value), which can be chosen for clustering. ',
+                                                                                                                                           style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px"),
+                                                                                                                             htmltools::br(),
+                                                                                                                             htmltools::div(id='CORR_species_linear_style_div',
+                                                                                                                                            style="text-align:justify;background-color:HoneyDew;padding:15px;border-radius:10px;height:290px",
+                                                                                                                                            htmltools::div(id='CORR_species_linear_reset_div',
+                                                                                                                                                           shiny::column(width=12,
+                                                                                                                                                                         shiny::column(width=4,
+                                                                                                                                                                                       shiny::radioButtons(inputId='CORR_species_linear_adj_stat_method', label='Multiple testing correction:',
+                                                                                                                                                                                                           choices=c('Benjamini & Hochberg'='BH'),
+                                                                                                                                                                                                           selected='BH',inline=TRUE), #radioButtons #CORR_species_linear_adj_stat_method
+                                                                                                                                                                                       shiny::uiOutput("CORR.species.linear.sidecolor")
+                                                                                                                                                                         ), ## column 4
+                                                                                                                                                                         shiny::column(width=4,
+                                                                                                                                                                                       shiny::selectInput(inputId='CORR_species_linear_sig_p',label='Identify significant lipids:',
+                                                                                                                                                                                                          choices=c('p-value'='pval',
+                                                                                                                                                                                                                    'adjusted p-value'='padj'),
+                                                                                                                                                                                                          selected='p', multiple=FALSE), #selectInput #CORR_species_linear_sig_p
+                                                                                                                                                                                       shiny::numericInput(inputId='CORR_species_linear_pval',label='p-value:',
+                                                                                                                                                                                                           value=1, min=0.001, max=1, step=0.001) #numericInput #CORR_species_linear_pval
+                                                                                                                                                                         ), ## column 4
+                                                                                                                                                                         shiny::column(width=4,
+                                                                                                                                                                                       shiny::radioButtons(inputId='CORR_species_linear_color', label='Value for clustering:',
+                                                                                                                                                                                                           choices=c('beta coefficient'='beta_coef',
+                                                                                                                                                                                                                     't statistics'='t_statistic'),
+                                                                                                                                                                                                           selected='beta_coef', inline=TRUE), #radioButtons #CORR_species_linear_color
+                                                                                                                                                                                       shiny::selectInput(inputId='CORR_species_linear_dist', label='Distance measure:',
+                                                                                                                                                                                                          choices=c('Pearson'='pearson',
+                                                                                                                                                                                                                    'Spearman'='spearman',
+                                                                                                                                                                                                                    'Kendall'='kendall',
+                                                                                                                                                                                                                    "Euclidean"="euclidean",
+                                                                                                                                                                                                                    "Maximum"="maximum",
+                                                                                                                                                                                                                    "Manhattan"="manhattan",
+                                                                                                                                                                                                                    "Canberra"="canberra",
+                                                                                                                                                                                                                    "Binary"="binary",
+                                                                                                                                                                                                                    "Minkowski"="minkowski"),
+                                                                                                                                                                                                          selected='pearson', multiple=FALSE), #selectInput #CORR_species_linear_dist
+                                                                                                                                                                                       shiny::selectInput(inputId='CORR_species_linear_hclust', label='Clustering method:',
+                                                                                                                                                                                                          choices=c('Complete'='complete',
+                                                                                                                                                                                                                    'Single'='single',
+                                                                                                                                                                                                                    'Median'='median',
+                                                                                                                                                                                                                    'Average'='average',
+                                                                                                                                                                                                                    "Ward.D"="ward.D",
+                                                                                                                                                                                                                    "Ward.D2"="ward.D2",
+                                                                                                                                                                                                                    "WPGMA"="mcquitty",
+                                                                                                                                                                                                                    "WOGMC"="median",
+                                                                                                                                                                                                                    "UPGMC"="centroid"),
+                                                                                                                                                                                                          selected='centroid', multiple=FALSE) #selectInput #CORR_species_linear_hclust
+                                                                                                                                                                         ) ## column 4
+                                                                                                                                                           ) ## column 12
+                                                                                                                                            ), #div #CORR_species_linear_reset_div
+                                                                                                                                            shiny::column(width=12),
+                                                                                                                                            shiny::column(width=12,
+                                                                                                                                                          shiny::column(width=4),
+                                                                                                                                                          shiny::column(width=8,
+                                                                                                                                                                        shiny::actionButton(inputId='CORR_species_linear_reset', label='Reset', icon=shiny::icon('redo')), #actionButton #CORR_species_linear_reset
+                                                                                                                                                                        shiny::actionButton(inputId='CORR_species_linear_start', label='Submit', icon=shiny::icon('play')) #actionButton #CORR_species_linear_start
+                                                                                                                                                          ) #column
+                                                                                                                                            )## column 12
+                                                                                                                             ), #div #CORR_species_linear_style_div
+                                                                                                                             htmltools::br()
+                                                                                                               ) ## column 12
+                                                                                               ) #tabPanel #Linear regression
+                                                                           ), #navlistPanel
+                                                                           htmltools::div(id='CORR_species_corr_result_div', style='display:none;',
+                                                                                          shiny::column(width=3,
+                                                                                                        htmltools::HTML('<div style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px">',
+                                                                                                                        '<h4 style="text-align:left; line-height: 25px;">
+                                                                                                                         The heatmap demonstrates a correlation between clinical features and lipid species.
+                                                                                                                         Clinical features are displayed along the heatmap rows, while the columns represent various lipid species.
+                                                                                                                         The color of each cell corresponds to the coefficient value, ranging from positive (red) to negative (blue) in a gradient.
+                                                                                                                         </h4>
+                                                                                                                         <h4 style="font-style:italic; font-weight: bolder; font-size:17px; line-height: 30px; color: #CD5C5C">
+                                                                                                                         <ul>
+                                                                                                                         <li>If the lipid/sample number exceeds 50, their names will not be displayed on the heatmap.</li>
+                                                                                                                         <li>Hover on a specific heatmap cell to view more corresponding information.</li>
+                                                                                                                         </ul></h4></div>')
+                                                                                          ), ## column 
+                                                                                          shiny::column(width=9,
+                                                                                                        htmltools::h3('Lipid species-clinical features correlation heatmap',style='text-align:center;'),
+                                                                                                        plotly::plotlyOutput(outputId='CORR.species.corr.heatmap', height='100%') %>% shinycssloaders::withSpinner(), #plotlyOutput #CORR.species.corr.heatmap
+                                                                                                        htmltools::br(),
+                                                                                                        shiny::column(12,
+                                                                                                                      shiny::column(width=5),
+                                                                                                                      shiny::column(width=2, style='padding:0px;text-align:center;', shiny::actionButton("CORR.species.corr.download.start", "Download PDF", icon=shiny::icon("download"))),
+                                                                                                                      shiny::column(width=5, shiny::downloadButton("CORR.species.corr.download", "Download", style="visibility:hidden;"))
+                                                                                                        ) ## column 12
+                                                                                          ) ## column 9
+                                                                           ), ## div # CORR_species_corr_result_div
+                                                                           htmltools::div(id='CORR_species_linear_result_div', style='display: none;',
+                                                                                          shiny::column(width=3,
+                                                                                                        htmltools::HTML('<div style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px">',
+                                                                                                                        '<h4 style="text-align:left; line-height: 25px;">
+                                                                                                                         The heatmap demonstrates a correlation between clinical features and lipid species.
+                                                                                                                         Clinical features are displayed along the heatmap rows, while the columns represent various lipid species.
+                                                                                                                         The color of each cell corresponds to the coefficient value, ranging from positive (red) to negative (blue) in a gradient.
+                                                                                                                         </h4>
+                                                                                                                         <h4 style="font-style:italic; font-weight: bolder; font-size:17px; line-height: 30px; color: #CD5C5C">
+                                                                                                                         <ul>
+                                                                                                                         <li>If the lipid/sample number exceeds 50, their names will not be displayed on the heatmap.</li>
+                                                                                                                         <li>Hover on a specific heatmap cell to view more corresponding information.</li>
+                                                                                                                         </ul></h4></div>')
+                                                                                          ), ## column 3
+                                                                                          shiny::column(width=9,
+                                                                                                        htmltools::h3('Lipid species-clinical features correlation heatmap',style='text-align: center;'),
+                                                                                                        plotly::plotlyOutput(outputId='CORR.species.linear.heatmap', height='100%') %>% shinycssloaders::withSpinner(), #plotlyOutput #CORR.species.linear.heatmap
+                                                                                                        htmltools::br(),
+                                                                                                        shiny::column(12,
+                                                                                                                      shiny::column(width=5),
+                                                                                                                      shiny::column(width=2, style='padding:0px;text-align:center;', shiny::actionButton("CORR.species.linear.download.start", "Download PDF", icon=shiny::icon("download"))),
+                                                                                                                      shiny::column(width=5, shiny::downloadButton("CORR.species.linear.download", "Download", style="visibility:hidden;"))
+                                                                                                        ) ## column 12
+                                                                                          ) ## column 8
+                                                                           ) ## div # CORR_species_linear_result_divc
+                                                           ), #tabPanel #Lipid species analysis
+                                                           shiny::tabPanel(title='Lipid characteristics analysis',
+                                                                           htmltools::br(),
+                                                                           shiny::navlistPanel(widths=c(3, 9),
+                                                                                               id='CORR_class_list',
+                                                                                               #######################
+                                                                                               ####  Correlation  ####
+                                                                                               #######################
+                                                                                               shiny::tabPanel(title='Correlation', 
+                                                                                                               htmltools::h3('Correlation'),
+                                                                                                               shiny::column(width=12,
+                                                                                                                             htmltools::div(htmltools::h6('The Correlation Coefficient gives a summary view that tells researchers whether a relationship exists between clinical features and user-defined lipid characteristics,
+                                                                                                                       how strong that relationship is and whether the relationship is positive or negative. Here we provide three types of correlations, Pearson, Spearman, and Kendall,
+                                                                                                                       and adjusted by Benjamini & Hochberg methods. The cut-offs for correlation coefficient and the p-value can be decided by users. '),
+                                                                                                                                            htmltools::h6('A heatmap will show after users inputting cut-offs and choosing a value for clustering/methods for clustering.
+                                                                                                                       Users can use either correlation coefficient between clinical features (e.g. genes) and lipid characteristics or choose their statistic instead.'),
+                                                                                                                                            style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px"),
+                                                                                                                             htmltools::br(),
+                                                                                                                             htmltools::div(id='CORR_class_corr_style_div',
+                                                                                                                                            style="text-align:justify;background-color:HoneyDew;padding:15px;border-radius:10px;height:320px",
+                                                                                                                                            htmltools::div(id='CORR_class_corr_reset_div',
+                                                                                                                                                           shiny::column(width=12,
+                                                                                                                                                                         shiny::column(width=4,
+                                                                                                                                                                                       shiny::uiOutput("CORR.class.corr.lipid.char"), #uiOutput #CORR_class_corr_lipid_char
+                                                                                                                                                                                       shiny::selectInput(inputId='CORR_class_corr_method',
+                                                                                                                                                                                                          label='Correlation method:',
+                                                                                                                                                                                                          choices=c('Pearson'='pearson',
+                                                                                                                                                                                                                    'Spearman'='spearman'),
+                                                                                                                                                                                                          selected='pearson', multiple=FALSE), #selectInput #CORR_class_corr_method
+                                                                                                                                                                                       shiny::radioButtons(inputId='CORR_class_corr_adj_stat_method',
+                                                                                                                                                                                                           label='Multiple testing correction:',
+                                                                                                                                                                                                           choices=c('Benjamini & Hochberg'='BH'),
+                                                                                                                                                                                                           selected='BH', inline=TRUE) #radioButtons #CORR_class_corr_adj_stat_method 
+                                                                                                                                                                         ), ## column 4
+                                                                                                                                                                         shiny::column(width=4,
+                                                                                                                                                                                       shiny::selectInput(inputId='CORR_class_corr_sig_p', label='Identify significant lipids:',
+                                                                                                                                                                                                          choices=c('p-value'='pval',
+                                                                                                                                                                                                                    'adjusted p-value'='padj'),
+                                                                                                                                                                                                          selected='padj', multiple=FALSE), #selectInput #CORR_class_corr_sig_p
+                                                                                                                                                                                       shiny::numericInput(inputId='CORR_class_corr_pval', label='p-value:',
+                                                                                                                                                                                                           value=1, min=0.001, max=1, step=0.001), #numericInput #CORR_class_corr_pval
+                                                                                                                                                                                       shiny::numericInput(inputId='CORR_class_corr_coef', label='Correlation coefficient cutoff:',
+                                                                                                                                                                                                           value=0, min=0, max=1, step=0.1) %>% #numericInput #CORR_class_corr_coef
+                                                                                                                                                                                         shinyhelper::helper(type="inline", title="Cutoff of correlation coefficientg Help",
+                                                                                                                                                                                                             content=c("A coefficient of <0.1 indicates a negligible and >0.9 a very strong relationship, values in-between are disputable."))
+                                                                                                                                                                         ), ## column 4
+                                                                                                                                                                         shiny::column(width=4,
+                                                                                                                                                                                       shiny::radioButtons(inputId='CORR_class_corr_color', label='Value for clustering:',
+                                                                                                                                                                                                           choices=c('correlation coefficient'='cor_coef',
+                                                                                                                                                                                                                     'statistics'='statistic'),
+                                                                                                                                                                                                           selected='cor_coef', inline=FALSE), #radioButtons #CORR_class_corr_color
+                                                                                                                                                                                       shiny::selectInput(inputId='CORR_class_corr_dist', label='Distance measure:',
+                                                                                                                                                                                                          choices=c('Pearson'='pearson',
+                                                                                                                                                                                                                    'Spearman'='spearman',
+                                                                                                                                                                                                                    'Kendall'='kendall'),
+                                                                                                                                                                                                                    #"Euclidean"="euclidean",
+                                                                                                                                                                                                                    #"Maximum"="maximum",
+                                                                                                                                                                                                                    #"Manhattan"="manhattan",
+                                                                                                                                                                                                                    #"Canberra"="canberra",
+                                                                                                                                                                                                                    #"Binary"="binary",
+                                                                                                                                                                                                                    #"Minkowski"="minkowski"),
+                                                                                                                                                                                                          selected='spearman', multiple=FALSE), #selectInput #CORR_class_corr_dist
+                                                                                                                                                                                       shiny::selectInput(inputId='CORR_class_corr_hclust', label='Clustering method:',
+                                                                                                                                                                                                          choices=c('Complete'='complete',
+                                                                                                                                                                                                                    'Single'='single',
+                                                                                                                                                                                                                    'Median'='median',
+                                                                                                                                                                                                                    'Average'='average',
+                                                                                                                                                                                                                    "Ward.D"="ward.D",
+                                                                                                                                                                                                                    "Ward.D2"="ward.D2",
+                                                                                                                                                                                                                    "WPGMA"="mcquitty",
+                                                                                                                                                                                                                    "WOGMC"="median",
+                                                                                                                                                                                                                    "UPGMC"="centroid"),
+                                                                                                                                                                                                          selected='average', multiple=FALSE ) #selectInput #CORR_class_corr_hclust
+                                                                                                                                                                         ) ## column 4
+                                                                                                                                                           )## column 12
+                                                                                                                                            ), #div #CORR_class_corr_reset_div
+                                                                                                                                            shiny::column(width=12,
+                                                                                                                                                          shiny::column(width=4),
+                                                                                                                                                          shiny::column(width=8,
+                                                                                                                                                                        shiny::actionButton(inputId='CORR_class_corr_reset', label='Reset', icon=shiny::icon('redo')), #actionButton #CORR_class_corr_reset
+                                                                                                                                                                        shiny::actionButton(inputId='CORR_class_corr_start', label='Submit', icon=shiny::icon('play')) #actionButton #CORR_class_corr_start
+                                                                                                                                                          ) ## column 8
+                                                                                                                                            )
+                                                                                                                             ), #div #CORR_class_corr_style_div
+                                                                                                                             htmltools::br()
+                                                                                                               ) ## column 12
+                                                                                               ), #tabPanel #Correlation
+                                                                                               #############################
+                                                                                               ####  Linear regression  ####
+                                                                                               #############################
+                                                                                               tabPanel(title='Linear regression',
+                                                                                                        htmltools::h3('Linear regression'),
+                                                                                                        shiny::column(width=12,
+                                                                                                                      htmltools::h6(p("Multiple linear regression is a statistical technique that uses several explanatory variables to predict the outcome of a response variable,
                                                                                                  allowing researchers to estimate the associations between lipid levels and clinical features (i.e., genetic polymorphisms).
                                                                                                  In this page, the lipids will be classified by the user-selected lipid characteristics (e.g. class), then implementing multiple linear regression analysis.
-                                                                                                 Each variable (the pair of lipid characteristics and clinical features) will be assigned a beta coefficient and t statistic (p-value), which can be chosen for clustering.", 
-                                                                                                     style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px")),
-                                                                                                br(),
-                                                                                                div(id = 'CORR_class_linear_style_div', 
-                                                                                                    div(id = 'CORR_class_linear_reset_div', 
-                                                                                                        column(width = 4, 
-                                                                                                               #textOutput(outputId = 'CORR.class.linear.adj.factor'), #textOutput #CORR.class.linear.adj.factor
-                                                                                                               selectInput(inputId = 'CORR_class_linear_lipid_char', 
-                                                                                                                           label = 'Select the lipid characteristic:', 
-                                                                                                                           choices = 'class', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_class_linear_lipid_char
-                                                                                                               radioButtons(inputId = 'CORR_class_linear_adj_stat_method', 
-                                                                                                                            label = 'Multiple testing correction:', 
-                                                                                                                            choices = c('Benjamini & Hochberg' = 'BH'), 
-                                                                                                                            selected = 'BH', 
-                                                                                                                            inline = T
-                                                                                                               ) #radioButtons #CORR_class_linear_adj_stat_method
-                                                                                                        ), #column
-                                                                                                        column(width = 4, 
-                                                                                                               selectInput(inputId = 'CORR_class_linear_sig_p', 
-                                                                                                                           label = 'Identify significant lipids:', 
-                                                                                                                           choices = c('p-value' = 'p', 
-                                                                                                                                       'adjusted p-value' = 'p.adj'), 
-                                                                                                                           selected = 'p', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_class_linear_sig_p
-                                                                                                               numericInput(inputId = 'CORR_class_linear_pval', 
-                                                                                                                            label = 'p-value:', 
-                                                                                                                            value = 1, 
-                                                                                                                            min = 0, 
-                                                                                                                            max = 1
-                                                                                                               ) #numericInput #CORR_class_linear_pval
-                                                                                                        ), #column
-                                                                                                        column(width = 4, 
-                                                                                                               radioButtons(inputId = 'CORR_class_linear_color', 
-                                                                                                                            label = 'Value for clustering:', 
-                                                                                                                            choices = c('beta coefficient' = 'beta_coef', 
-                                                                                                                                        't statistics' = 't_statistic'), 
-                                                                                                                            selected = 't_statistic', 
-                                                                                                                            inline = T
-                                                                                                               ), #radioButtons #CORR_class_linear_color
-                                                                                                               selectInput(inputId = 'CORR_class_linear_dist', 
-                                                                                                                           label = 'Distance measure:', 
-                                                                                                                           choices = c('Pearson' = 'pearson', 
-                                                                                                                                       'Spearman' = 'spearman', 
-                                                                                                                                       'Kendall'='kendall',
-                                                                                                                                       "Euclidean" = "euclidean",
-                                                                                                                                       "Maximum" = "maximum",
-                                                                                                                                       "Manhattan" = "manhattan",
-                                                                                                                                       "Canberra" = "canberra",
-                                                                                                                                       "Binary" = "binary",
-                                                                                                                                       "Minkowski" = "minkowski"),
-                                                                                                                           selected = 'pearson', 
-                                                                                                                           multiple = F
-                                                                                                               ), #selectInput #CORR_class_linear_dist
-                                                                                                               selectInput(inputId = 'CORR_class_linear_hclust', 
-                                                                                                                           label = 'Clustering method:', 
-                                                                                                                           choices = c('Complete' = 'complete', 
-                                                                                                                                       'Single' = 'single', 
-                                                                                                                                       'Median'='median', 
-                                                                                                                                       'Average' = 'average', 
-                                                                                                                                       "Ward.D" = "ward.D",
-                                                                                                                                       "Ward.D2" = "ward.D2",
-                                                                                                                                       "WPGMA" = "mcquitty",
-                                                                                                                                       "WOGMC" = "median",
-                                                                                                                                       "UPGMC" = "centroid"), 
-                                                                                                                           selected = 'centroid', 
-                                                                                                                           multiple = F
-                                                                                                               ) #selectInput #CORR_class_linear_hclust
-                                                                                                        ) #column
-                                                                                                    ), #div #CORR_class_linear_reset_div
-                                                                                                    column(width = 12),
-                                                                                                    column(width = 4),
-                                                                                                    column(width = 8, 
-                                                                                                           actionButton(inputId = 'CORR_class_linear_reset', 
-                                                                                                                        label = 'Reset', icon = icon('redo')
-                                                                                                           ), #actionButton #CORR_class_linear_reset
-                                                                                                           actionButton(inputId = 'CORR_class_linear_start', 
-                                                                                                                        label = 'Submit', icon = icon('play')
-                                                                                                           ) #actionButton #CORR_class_linear_start
-                                                                                                    ), #column
-                                                                                                    style="text-align:justify;background-color:HoneyDew;padding:15px;border-radius:10px;height:290px"
-                                                                                                ), #div #CORR_class_linear_style_div
-                                                                                                br(),
-                                                                                                conditionalPanel(condition = 'input.CORR_class_linear_start',
-                                                                                                                 div(id = 'CORR_class_linear_result_div', 
-                                                                                                                     column(width = 12,
-                                                                                                                            iheatmaprOutput(outputId = 'CORR.class.linear.heatmap', height = '100%') %>% withSpinner(), #plotlyOutput #CORR.class.linear.heatmap
-                                                                                                                            br(),
-                                                                                                                            column(width = 4),
-                                                                                                                            column(width = 8,
-                                                                                                                                   downloadButton(outputId = 'CORR.class.linear.heatmap.matrix', label = 'Download matrix'), 
-                                                                                                                                   br(),
-                                                                                                                                   br(),
-                                                                                                                                   br(),
-                                                                                                                                   br()
-                                                                                                                            ) #column
-                                                                                                                     ) #column
-                                                                                                                 ) #div #CORR_class_linear_result_div
-                                                                                                ) #conditionalPanel
-                                                                                         ) #column
-                                                                                ) #tabPanel #Linear regression
-                                                                   ) #navlistPanel
-                                                          ) #tabPanel #Lipid category analysis
-                                              ) #tabsetPanel
-                                              ) #conditionalPanel
-                             ) #div #CORR_tabPanel_div
-                         
-                         ) #column
-                  ) #fluidRow
-) #tabPanel
-
-
-
-
+                                                                                                 Each variable (the pair of lipid characteristics and clinical features) will be assigned a beta coefficient and t statistic (p-value), which can be chosen for clustering.",
+                                                                                                                                      style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px")),
+                                                                                                                      htmltools::br(),
+                                                                                                                      htmltools::div(id='CORR_class_linear_style_div',
+                                                                                                                                     style="text-align:justify;background-color:HoneyDew;padding:15px;border-radius:10px;height:290px",
+                                                                                                                                     htmltools::div(id='CORR_class_linear_reset_div',
+                                                                                                                                                    shiny::column(width=12,
+                                                                                                                                                                  shiny::column(width=4,
+                                                                                                                                                                                shiny::uiOutput("CORR.class.linear.lipid.char"), #uiOutput #CORR_class_linear_lipid_char
+                                                                                                                                                                                shiny::radioButtons(inputId='CORR_class_linear_adj_stat_method', label='Multiple testing correction:',
+                                                                                                                                                                                                    choices=c('Benjamini & Hochberg'='BH'),
+                                                                                                                                                                                                    selected='BH', inline=TRUE) #radioButtons #CORR_class_linear_adj_stat_method
+                                                                                                                                                                                ), ## column 4
+                                                                                                                                                                  shiny::column(width=4,
+                                                                                                                                                                                shiny::selectInput(inputId='CORR_class_linear_sig_p', label='Identify significant lipids:',
+                                                                                                                                                                                                   choices=c('p-value'='pval',
+                                                                                                                                                                                                             'adjusted p-value'='padj'),
+                                                                                                                                                                                                   selected='p', multiple=FALSE), #selectInput #CORR_class_linear_sig_p
+                                                                                                                                                                                shiny::numericInput(inputId='CORR_class_linear_pval', label='p-value:',
+                                                                                                                                                                                                    value=1, min=0.001, max=1, step=0.001) #numericInput #CORR_class_linear_pval
+                                                                                                                                                                                ), ## column 4
+                                                                                                                                                                  shiny::column(width=4,
+                                                                                                                                                                                shiny::radioButtons(inputId='CORR_class_linear_color', label='Value for clustering:',
+                                                                                                                                                                                                    choices=c('beta coefficient'='beta_coef',
+                                                                                                                                                                                                              't statistics'='t_statistic'),
+                                                                                                                                                                                                    selected='beta_coef', inline=TRUE), #radioButtons #CORR_class_linear_color
+                                                                                                                                                                                shiny::selectInput(inputId='CORR_class_linear_dist', label='Distance measure:',
+                                                                                                                                                                                                   choices=c('Pearson'='pearson',
+                                                                                                                                                                                                             'Spearman'='spearman',
+                                                                                                                                                                                                             'Kendall'='kendall',
+                                                                                                                                                                                                             "Euclidean"="euclidean",
+                                                                                                                                                                                                             "Maximum"="maximum",
+                                                                                                                                                                                                             "Manhattan"="manhattan",
+                                                                                                                                                                                                             "Canberra"="canberra",
+                                                                                                                                                                                                             "Binary"="binary",
+                                                                                                                                                                                                             "Minkowski"="minkowski"),
+                                                                                                                                                                                                   selected='pearson', multiple=FALSE), #selectInput #CORR_class_linear_dist
+                                                                                                                                                                                shiny::selectInput(inputId='CORR_class_linear_hclust', label='Clustering method:',
+                                                                                                                                                                                                   choices=c('Complete'='complete',
+                                                                                                                                                                                                             'Single'='single',
+                                                                                                                                                                                                             'Median'='median',
+                                                                                                                                                                                                             'Average'='average',
+                                                                                                                                                                                                             "Ward.D"="ward.D",
+                                                                                                                                                                                                             "Ward.D2"="ward.D2",
+                                                                                                                                                                                                             "WPGMA"="mcquitty",
+                                                                                                                                                                                                             "WOGMC"="median",
+                                                                                                                                                                                                             "UPGMC"="centroid"),
+                                                                                                                                                                                                   selected='centroid', multiple=FALSE) #selectInput #CORR_class_linear_hclust
+                                                                                                                                                                                ) ## column 4
+                                                                                                                                                                  ) ## column 12
+                                                                                                                                                    ), #div #CORR_class_linear_reset_div
+                                                                                                                                     shiny::column(width=12,
+                                                                                                                                                   shiny::column(width=4),
+                                                                                                                                                   shiny::column(width=8,
+                                                                                                                                                                 shiny::actionButton(inputId='CORR_class_linear_reset', label='Reset', icon=shiny::icon('redo')), #actionButton #CORR_class_linear_reset
+                                                                                                                                                                 shiny::actionButton(inputId='CORR_class_linear_start', label='Submit', icon=shiny::icon('play')) #actionButton #CORR_class_linear_start
+                                                                                                                                                                 ) ## column 8
+                                                                                                                                                   )## column 12
+                                                                                                                                     ), #div #CORR_class_linear_style_div
+                                                                                                                      htmltools::br()
+                                                                                                                      ) ## column 12
+                                                                                                        ) #tabPanel #Linear regression
+                                                                                               ), #navlistPanel
+                                                                           htmltools::div(id='CORR_class_corr_result_div', style='display: none;',
+                                                                                          shiny::column(width=3,
+                                                                                                        htmltools::HTML(
+                                                                                                          '<div style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px">',
+                                                                                                          '<h4 style="text-align:left; line-height: 25px;">
+                                                                                                           The heatmap demonstrates a correlation between clinical features user-defined lipid characteristics.
+                                                                                                           Clinical features are displayed along the heatmap rows, while the columns represent lipid characteristics.
+                                                                                                           The color of each cell corresponds to the coefficient value, ranging from positive (red) to negative (blue) in a gradient.
+                                                                                                           </h4>
+                                                                                                           <h4 style="font-style:italic; font-weight: bolder; font-size:17px; line-height: 30px; color: #CD5C5C">
+                                                                                                           <ul>
+                                                                                                           <li>If the lipid/sample number exceeds 50, their names will not be displayed on the heatmap.</li>
+                                                                                                           <li>Hover on a specific heatmap cell to view more corresponding information.</li>
+                                                                                                           </ul></h4></div>' )
+                                                                                                        ),## column 3
+                                                                                          shiny::column(width=9,
+                                                                                                        htmltools::h3('Lipid characteristics-clinical features correlation heatmap',style='text-align: center;'),
+                                                                                                        plotly::plotlyOutput(outputId='CORR.class.corr.heatmap', height='100%') %>% shinycssloaders::withSpinner(), #plotlyOutput #CORR.class.corr.heatmap
+                                                                                                        htmltools::br(),
+                                                                                                        shiny::column(12,
+                                                                                                                      shiny::column(width=5),
+                                                                                                                      shiny::column(width=2, style='padding:0px;text-align:center;', shiny::actionButton("CORR.class.corr.download.start", "Download PDF", icon=shiny::icon("download"))),
+                                                                                                                      shiny::column(width=5, shiny::downloadButton("CORR.class.corr.download", "Download", style="visibility:hidden;"))
+                                                                                                                      ) ## column 12
+                                                                                                        ) ## column 9
+                                                                                          ), ## div # CORR_class_corr_result_div
+                                                                           htmltools::div(id='CORR_class_linear_result_div', style='display:none;',
+                                                                                          shiny::column(width=3,
+                                                                                                        htmltools::HTML(
+                                                                                                          '<div style="text-align: left;background-color: AliceBlue;border-left: 8px solid LightSteelBlue;padding: 15px">',
+                                                                                                          '<h4 style="text-align:left; line-height: 25px;">
+                                                                                                           The heatmap demonstrates a correlation between clinical features user-defined lipid characteristics.
+                                                                                                           Clinical features are displayed along the heatmap rows, while the columns represent lipid characteristics.
+                                                                                                           The color of each cell corresponds to the coefficient value, ranging from positive (red) to negative (blue) in a gradient.
+                                                                                                           </h4>
+                                                                                                           <h4 style="font-style:italic; font-weight: bolder; font-size:17px; line-height: 30px; color: #CD5C5C">
+                                                                                                           <ul>
+                                                                                                           <li>If the lipid/sample number exceeds 50, their names will not be displayed on the heatmap.</li>
+                                                                                                           <li>Hover on a specific heatmap cell to view more corresponding information.</li>
+                                                                                                           </ul></h4></div>')
+                                                                                                        ), ## column 3
+                                                                                          shiny::column(width=9,
+                                                                                                        htmltools::h3('Lipid characteristics-clinical features correlation heatmap',style='text-align: center;'),
+                                                                                                        plotly::plotlyOutput(outputId='CORR.class.linear.heatmap', height='100%') %>% shinycssloaders::withSpinner(), #plotlyOutput #CORR.class.linear.heatmap
+                                                                                                        htmltools::br(),
+                                                                                                        shiny::column(12,
+                                                                                                                      shiny::column(width=5),
+                                                                                                                      shiny::column(width=2, style='padding:0px;text-align:center;', shiny::actionButton("CORR.class.linear.download.start", "Download PDF", icon=shiny::icon("download"))),
+                                                                                                                      shiny::column(width=5, shiny::downloadButton("CORR.class.linear.download", "Download", style="visibility:hidden;"))
+                                                                                                                      ) ## column 12
+                                                                                                        ) ## column 9
+                                                                                          ) ## div # CORR_class_linear_result_div
+                                                           ) #tabPanel #Lipid category analysis
+                                        ) #tabsetPanel
+                         ) ## div # CORR_tabPanel_div
+           ) ## column 12
+         ) ## fluidRow
+) ## tabPanel

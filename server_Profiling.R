@@ -1,5 +1,3 @@
-##test5.v27
-
 ################################
 ################################
 ######                    ######
@@ -8,544 +6,623 @@
 ################################
 ################################
 
-
-############################
-####  Assign variables  ####
-############################
-
-#### PRO_exp_data() ####
-PRO_exp_data <- reactive({
-  if(input$PRO_data_source == 'PRO_demo_data'){
-    variables$PRO.exp.data.demo
-  }else if(input$PRO_data_source == 'PRO_user_data'){
-    variables$PRO.exp.data.user
-  }
-})
-
-#### PRO_exp_transform_data() ####
-PRO_exp_transform_data <- reactive({
-  if(input$PRO_data_source == 'PRO_demo_data'){
-    data_process(PRO_exp_data(), 
-                 exclude_var_missing=T, 
-                 missing_pct_limit=50,
-                 replace_zero=T, zero2what='NA', xmin=0.5,
-                 replace_NA=T, NA2what='min', ymin=0.5,
-                 pct_transform=T,
-                 data_transform=F,
-                 centering=F,
-                 scaling=F)
-  }else if(input$PRO_data_source == 'PRO_user_data'){
-    PRO_Check_exp_data_table <- reactive({variables$PRO.check.exp.data.user})
-    if(data_check(exp_data=PRO_Check_exp_data_table(),data_type="exp",page="Profiling",file_path=input$PRO_user_exp$datapath,
-                  remove_na=input$PRO_rm_NA,remove_na_pct=input$PRO_rm_NA_pct)[[2]]){
-      data_process(PRO_exp_data(), 
-                   exclude_var_missing=input$PRO_rm_NA, 
-                   missing_pct_limit=input$PRO_rm_NA_pct,
-                   replace_zero=T, zero2what='NA', xmin=0.5,
-                   replace_NA=input$PRO_rp_NA, NA2what=input$PRO_fill_NA, ymin=input$PRO_fill_min,
-                   pct_transform=input$PRO_pct_trans,
-                   data_transform=input$PRO_log_trans,trans_type='log',
-                   centering=F,
-                   scaling=F)
-    }else{
-      NULL
-    }
-  }
-  
-})
-
-#### PRO_lipid_char_table() ####
-PRO_lipid_char_table <- reactive({
-  if(input$PRO_data_source == 'PRO_demo_data'){
-    variables$PRO.lipid.char.tab.demo
-  }else if(input$PRO_data_source == 'PRO_user_data'){
-    if(!is.null(variables$PRO.lipid.char.tab.user)){
-      variables$PRO.lipid.char.tab.user <- variables$PRO.lipid.char.tab.user %>% 
-        filter(feature %in% PRO_exp_transform_data()$feature)
-    }else{
-      variables$PRO.lipid.char.tab.user <- NULL
-    }
-  }
-})
-
-#### PRO_sample_count() ####
-PRO_sample_count <- reactive({
-  if(input$PRO_data_source == 'PRO_demo_data'){
-    23
-  }else if(input$PRO_data_source == 'PRO_user_data'){
-    variables$PRO.sample.count.user <- (ncol(variables$PRO.exp.data.user)-1)
-  }
-})
-
-shinyjs::hide('PRO_tabPanel_div')
-
-###########################
-####  PRO Data Source  ####
-###########################
-
 #### Output: PRO.demo.download ####
-output$PRO.demo.download <- downloadHandler(
-  filename = function() {
+output$PRO.demo.download <- shiny::downloadHandler(
+  filename=function() {
     "Profiling_example_dataset.zip"
   },
-  content = function(file) {
+  content=function(file) {
     file.copy("www/download_demo_dataset/Profiling.zip", file)
   },
-  contentType = "application/zip"
-) 
-
+  contentType="application/zip"
+)
+shiny::outputOptions(output, "PRO.demo.download", suspendWhenHidden=FALSE)
 
 #### PRO demo dataset ####
-observeEvent(input$PRO_demo_upload, {
-  
-  if(input$PRO_demo_upload > 0){
-    progressSweetAlert(
-      session = session, id = "PRO_demo_progress",
-      title = "Work in progress",
-      display_pct = TRUE, value = 0
-    )
-    #### shinyjs show/hide main panel ####
-    shinyjs::show('PRO_demo_mainPanel_div')
-    
-    #### import demo dataset ####
-    variables$PRO.exp.data.demo <- readRDS('www/demo_dataset/Profiling/exp_data.rds')
-    variables$PRO.lipid.char.tab.demo <- readRDS('www/demo_dataset/Profiling/lipid_char_table.rds')
-    #### Output: PRO.demo.exp.raw ####
-    output$PRO.demo.exp.raw <- renderDataTable(server = FALSE,{
-      isolate({
-        DT::datatable(variables$PRO.exp.data.demo, 
-                      #caption = 'Lipid expression data',
-                      #colnames = c('feature', ML_group_info()$label_name),
-                      escape = FALSE, selection = 'none', rownames = FALSE, 
-                      class = "nowrap row-border",
-                      extensions = c('Buttons', 'Scroller'),
-                      options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                     deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                     dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                     columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-      })
+shiny::observeEvent(input$PRO_demo_upload, {
+  shiny::isolate({
+    shiny::withProgress(message='Profiling analysis', style='notification', detail="Upload data", value=0, {
+      shinyjs::show('PRO_data_check_successful')
+      variables$PRO.SE <- readRDS('www/demo_dataset/Profiling.rds')
+      variables$PRO.SE.list <- LipidSigR::extract_summarized_experiment(variables$PRO.SE)
+      variables$PRO.raw.abundance <- variables$PRO.SE.list$abundance
+      variables$PRO.data.check.progress <- htmltools::tags$div(
+         h2('Upload progress'),
+         h4('(1/3) Check data frame format.'),
+         style="font-size: 0px;"
+      )
+      shiny::incProgress(0.33, detail='Check data format')
+      variables$PRO.check.step1 <- inputFormat(abundance=variables$PRO.raw.abundance,
+                                           abundance_path='demo_exp.csv',
+                                           analysis_type="Profiling",
+                                             variables=variables, session=session)
+      shiny::incProgress(0.33, detail='Check data format')
+      if(variables$PRO.check.step1$logical == TRUE){
+        variables$PRO.check.step2 <- data_check(
+          abundance=variables$PRO.raw.abundance, group_info=NULL,
+          abundance_path='demo_exp.csv', analysis_type="Profiling",
+                                             variables=variables, session=session)
+        output$PRO.Check.SE <- renderUI({
+          isolate({
+            variables$PRO.check.step2$return_div
+          })
+        })
+        variables$PRO.SE <- variables$PRO.check.step2$rawSE
+        if(grepl('class="fas fa-xmark"', variables$PRO.check.step2$return_div)){
+          shinyjs::show('PRO_data_warning')
+          shinyjs::hide('PRO_data_processing_div')
+        }else{
+          shinyjs::show('PRO_data_warning')
+          shinyjs::show('PRO_data_processing_div')
+        }
+        variables$PRO.data.check.progress <- htmltools::tags$div(
+          style="font-size: 0px;",
+          htmltools::h2('Upload progress'),
+          htmltools::h4('(2/3) Data check finish.')
+        )
+      }else{
+        output$PRO.Check.SE <- shiny::renderUI({
+          shiny::isolate({
+            variables$PRO.check.step1$return_div
+            })
+        })
+      }
+      shiny::incProgress(0.34, detail='Check data format finish')
     })
-    updateProgressBar(
-      session = session,
-      id = "PRO_demo_progress",
-      value = 30
-    )
-    #### Output: PRO.demo.exp ####
-    output$PRO.demo.exp <- renderDataTable(server = FALSE,{
-      isolate({
-        DT::datatable(PRO_exp_data() %>% mutate_if(is.numeric, ~round(., 5)), 
-                      #caption = 'Lipid expression data',
-                      #colnames = c('feature', ML_group_info()$label_name),
-                      escape = FALSE, selection = 'none', rownames = FALSE, 
-                      class = "nowrap row-border",
-                      extensions = c('Buttons', 'Scroller'),
-                      options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                     deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                     dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                     columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-      })
-    })
-    updateProgressBar(
-      session = session,
-      id = "PRO_demo_progress",
-      value = 60
-    )
-    #### Output: PRO.demo.lipid.char ####
-    output$PRO.demo.lipid.char <- renderDataTable(server = FALSE,{
-      isolate({
-        DT::datatable(PRO_lipid_char_table(), 
-                      #caption = 'Lipid expression data',
-                      #colnames = c('feature', ML_group_info()$label_name),
-                      escape = FALSE, selection = 'none', rownames = FALSE, 
-                      class = "nowrap row-border",
-                      extensions = c('Buttons', 'Scroller'),
-                      options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                     deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                     dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                     columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-      })
-    })
-    updateProgressBar(
-      session = session,
-      id = "PRO_demo_progress",
-      value = 90
-    )
-    updateProgressBar(
-      session = session,
-      id = "PRO_demo_progress",
-      value = 100
-    )
-    closeSweetAlert(session = session)
-  }
-  
-}) #observeEvent(input$PRO_demo_upload
+  })
+}) ## observeEvent # input$PRO_demo_upload
 
 #### PRO user dataset ####
-observeEvent(input$PRO_user_upload, {
-  
-  #### shinyjs show/hide main panel ####
-  shinyjs::show('PRO_user_mainPanel_div')
-  
-  #isolate({
-  progressSweetAlert(
-    session = session, id = "PRO_user_progress",
-    title = "Work in progress",
-    display_pct = TRUE, value = 0
-  )
-    showNotification("Start uploading file...", type = "message")
-    tryCatch(
-      {
-        #### import user dataset ####
-        ## exp_data
-        variables$PRO.exp.data.user <- data.table::fread(input$PRO_user_exp$datapath, header = T,
-                                                         stringsAsFactors = F, check.names = F, 
-                                                         data.table = F, na.strings = c('', 'NA'))
-        ## lipid_char_table
-        if(!is.null(input$PRO_user_char)){
-          variables$PRO.lipid.char.tab.user <- data.table::fread(input$PRO_user_char$datapath, header = T, 
-                                                                 stringsAsFactors = F, check.names = F, 
-                                                                 data.table = F, na.strings = c('', 'NA'))
-        }else{
-          variables$PRO.lipid.char.tab.user <- NULL
+shiny::observeEvent(input$PRO_user_upload, {
+  shiny::isolate({
+    shiny::withProgress(message='Profiling analysis', style='notification', detail="Upload data", value=0, {
+      shinyjs::show('PRO_upload')
+      shinyjs::show('PRO_data_check_successful')
+      showNotification("Start uploading file...", type="message")
+      variables$PRO.data.check.progress <- tags$div(
+         h2('Upload progress'),
+         h4('(1/3) Check data frame format.'),
+         style="font-size: 0px;")
+      #### import user dataset ####
+      tryCatch(
+        {
+          ## abundance ##
+          if(grepl('.xlsx',input$PRO_user_exp$datapath)){
+            variables$PRO.raw.abundance <- readxl::read_excel(
+              input$PRO_user_exp$datapath, na=c('', 'NA','na')) %>%
+              as.data.frame()
+          }else{
+            variables$PRO.raw.abundance <- data.table::fread(
+              input$PRO_user_exp$datapath, header=TRUE, stringsAsFactors=FALSE,
+              check.names=FALSE, data.table=FALSE, na.strings=c('', 'NA', 'na'))
+          }
+          shiny::showNotification("Received uploaded file.", type="message")
+        },
+        error=function(e) {
+          shinyWidgets::sendSweetAlert(
+            session=session,
+            title="Input data error!",
+            text=as.character(message(e)),
+            type="error")
+          return()
+        },
+        warning=function(w) {
+          shinyWidgets::sendSweetAlert(
+            session=session,
+            title="Input data warning!",
+            text="Some error is in your dataset, it maybe cause some problem we cannot expected.",
+            type="warning")
+          return()
         }
-        
-        showNotification("Received uploaded file.", type = "message")
-      },
-      error = function(e) {
-        sendSweetAlert(
-          session = session,
-          title = "Input data error!",
-          text = as.character(message(e)),
-          type = "error"
-        )
-        return()
-      },
-      warning = function(w) {
-        sendSweetAlert(
-          session = session,
-          title = "Input data warning!",
-          text = "Some error is in your dataset, it maybe cause some problem we cannot expected.",
-          type = "warning"
-        )
-        return()
-      }
-    )
-    
-    ### data check ####
-    ## exp_data
-    variables$PRO.check.exp.data.user <- data.table::fread(input$PRO_user_exp$datapath, header = T,
-                                                     stringsAsFactors = F, check.names = F, 
-                                                     data.table = F, na.strings = c('', 'NA'))
-    PRO_Check_exp_data_table <- reactive({variables$PRO.check.exp.data.user})
-    output$PRO_Check_Exp_Data <- renderUI({
-      isolate({
-        data_check(exp_data=PRO_Check_exp_data_table(),data_type="exp",
-                   page="Profiling",file_path=input$PRO_user_exp$datapath,
-                   remove_na=input$PRO_rm_NA,remove_na_pct=input$PRO_rm_NA_pct)[[1]]
-      })
+      )
+      ## Check input format ##
+      tryCatch(
+        {
+          shiny::incProgress(0.33, detail='Check data format')
+          variables$PRO.checkUTF8 <- check_utf8Format(abundance=variables$PRO.raw.abundance,
+                                                     abundance_path=input$PRO_user_exp$datapath,
+                                                     analysis_type="Profiling",
+                                             variables=variables, session=session)
+          if(variables$PRO.checkUTF8$logical == TRUE){
+            shinyjs::show('PRO_data_Uploaded')
+            variables$PRO.check.step1 <- inputFormat(abundance=variables$PRO.raw.abundance,
+                                                     abundance_path=input$PRO_user_exp$datapath,
+                                                     analysis_type="Profiling",
+                                             variables=variables, session=session)
+            shiny::incProgress(0.33, detail='Check data format')
+            if(variables$PRO.check.step1$logical == TRUE){
+              variables$PRO.check.step2 <- data_check(abundance=variables$PRO.raw.abundance,group_info=NULL,
+                                                      abundance_path=input$PRO_user_exp$datapath,
+                                                      analysis_type="Profiling",
+                                             variables=variables, session=session)
+              if(variables$PRO.check.step2$lipid_id_pct >= 20){
+                shinyWidgets::show_alert(
+                  title='Warning',
+                  text=htmltools::HTML("<h4>Warning! The unrecognized lipids in the uploaded abundance data are more than 20%.</h4>
+                                      <h4>We recommend revising the lipids' names. Please use Shorthand notation or refer to HMDB, SwissLipids, and LIPID MAPS LMSD styles for lipid input.</h4>
+                                      <h4>You can access the detailed instructions in our <a href='https://lipidsig.bioinfomics.org/FAQ/?FAQ12' target='_blank'>FAQ</a>.</h4>"),
+                  html=TRUE, type ='warning')
+              }
+              output$PRO.Check.SE <- shiny::renderUI({
+                shiny::isolate({
+                  variables$PRO.check.step2$return_div
+                })
+              })
+              variables$PRO.SE <- variables$PRO.check.step2$rawSE
+              variables$PRO.data.check.progress <- htmltools::tags$div(
+                style="font-size: 0px;",
+                htmltools::h2('Upload progress'),
+                htmltools::h4('(2/3) Data check finish.'))
+              if(grepl('class="fas fa-xmark"', variables$PRO.check.step2$return_div)){
+                shinyjs::show('PRO_data_warning')
+                shinyjs::hide('PRO_data_processing_div')
+              }else{
+                shinyjs::show('PRO_data_warning')
+                shinyjs::show('PRO_data_processing_div')
+              }
+            }else{
+              shinyjs::show('PRO_data_warning')
+              shinyjs::hide('PRO_data_processing_div')
+              output$PRO.Check.SE <- shiny::renderUI({
+                shiny::isolate({
+                  variables$PRO.check.step1$return_div
+                })
+              })
+            }
+          }else{
+            shiny::incProgress(0.33, detail='Check data format')
+            variables$PRO.raw.abundance <- NULL 
+            shinyjs::hide('PRO_data_Uploaded')
+            shinyjs::show('PRO_data_warning')
+            shinyjs::hide('PRO_data_processing_div')
+            output$PRO.Check.SE <- shiny::renderUI({
+              shiny::isolate({
+                variables$PRO.checkUTF8$return_div
+              })
+            })
+            variables$PRO.data.check.progress <- htmltools::tags$div(
+              style="font-size: 0px;",
+              htmltools::h2('Upload progress'),
+              htmltools::h4('(2/3) Data check finish.'))
+          }
+          shiny::incProgress(0.34, detail='Check data format finish')
+        },
+        error=function(e) {
+          shinyWidgets::show_alert(
+            title='Error',
+            text=htmltools::HTML("<h4>Detect unknown input data format errors.</h4>
+                                  <h4>For the correct data format guidelines, please refer to the <a href='https://lipidsig.bioinfomics.org/FAQ/?FAQ5' target='_blank'>FAQ</a></h4>.
+                                  <h4>If you need further assistance, please email us your data.(<a href='mailto:bioinfomics.web@gmail.com' target='_blank' style='color: darkblue;'>bioinfomics.web@gmail.com</a>)</h4>"),
+            html=TRUE, type ='error')
+          return()
+        }
+      )
     })
-    updateProgressBar(
-      session = session,
-      id = "PRO_user_progress",
-      value = 30
-    )
-    ## lipid_char_table
-    if(!is.null(input$PRO_user_char)){
-      variables$PRO.check.lipid.char.tab.user <- data.table::fread(input$PRO_user_char$datapath, header = T, 
-                                                                   stringsAsFactors = F, check.names = F,
-                                                                   data.table = F, na.strings = c('', 'NA'))
-      PRO_Check_lipid_char_data_table <- reactive({variables$PRO.check.lipid.char.tab.user})
-      output$PRO_Check_lipid_char <- renderUI({
-        isolate({
-          data_check(data=PRO_Check_lipid_char_data_table(),exp_data=PRO_Check_exp_data_table(),
-                     data_type="lipid_char",file_path=input$PRO_user_char$datapath)[[1]]
-        })
-      })
-    }else{
-      variables$PRO.check.lipid.char.tab.user <- NULL
-      PRO_Check_lipid_char_data_table <- reactive({variables$PRO.check.lipid.char.tab.user})
-      output$PRO_Check_lipid_char <- renderUI({
-        isolate({
-          data_check(data=NULL,exp_data = NULL,data_type="optional_lipid_char")[[1]]
-        })
-      })
-    }
-    #### rename column name ####
-    ## exp_data
-    variables$PRO.exp.user.col1 <- colnames(variables$PRO.exp.data.user)[1]
-    colnames(variables$PRO.exp.data.user)[1] <- 'feature'
-    ## lipid_char_table
-    if(!is.null(variables$PRO.lipid.char.tab.user)){
-      variables$PRO.lipid.char.user.col1 <- colnames(variables$PRO.lipid.char.tab.user)[1]
-      colnames(variables$PRO.lipid.char.tab.user)[1] <- 'feature'
-    }
-    updateProgressBar(
-      session = session,
-      id = "PRO_user_progress",
-      value = 60
-    )
-    # #### Output: PRO.user.exp ####
-    # output$PRO.user.exp <- renderDataTable(server = FALSE,{
-    #   
-    #   validate(need(!is.null(PRO_exp_transform_data()), "Some error is in your expression data, please check your data and re-upload it."))
-    #   DT::datatable(PRO_exp_transform_data(), 
-    #                 #caption = 'Lipid expression data',
-    #                 colnames = c(variables$PRO.exp.user.col1, colnames(variables$PRO.exp.data.user)[-1]),
-    #                 escape = FALSE, selection = 'none', rownames = FALSE, 
-    #                 class = "nowrap row-border",
-    #                 extensions = c('Buttons', 'Scroller'),
-    #                 options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-    #                                deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-    #                                dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-    #                                columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-    # })
-    # #### Output: PRO.user.lipid.char ####
-    # output$PRO.user.lipid.char <- renderDataTable(server = FALSE,{
-    #   
-    #   validate(need(!is.null(PRO_lipid_char_table()), "Without lipid_char_table"))
-    #   DT::datatable(PRO_lipid_char_table(), 
-    #                 #caption = 'Lipid expression data',
-    #                 colnames = c(variables$PRO.lipid.char.user.col1, colnames(variables$PRO.lipid.char.tab.user)[-1]),
-    #                 escape = FALSE, selection = 'none', rownames = FALSE, 
-    #                 class = "nowrap row-border",
-    #                 extensions = c('Buttons', 'Scroller'),
-    #                 options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-    #                                deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-    #                                dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-    #                                columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-    # })
-    
-    observe({
-      if(is.null(PRO_Check_lipid_char_data_table())){
-        if(data_check(data=NULL,exp_data = NULL,data_type="optional_lipid_char")[[2]] & 
-           data_check(exp_data=PRO_Check_exp_data_table(),data_type="exp",page="Profiling",file_path=input$PRO_user_exp$datapath,
-                      remove_na=input$PRO_rm_NA,remove_na_pct=input$PRO_rm_NA_pct)[[2]]){
-          shinyjs::show('PRO_user_input_table_div')
-          shinyjs::enable("PRO_user_start")
-          output$PRO_Data_summary <-  renderUI({
-            isolate({
-              data_summary(exp_data = PRO_Check_exp_data_table(),remove_na=input$PRO_rm_NA,remove_na_pct=input$PRO_rm_NA_pct,
-                           fill_na = input$PRO_rp_NA,fill_na_method = input$PRO_fill_NA,
-                           fill_na_Multiply = input$PRO_fill_min,
-                           PCT_tr = input$PRO_pct_trans,log_tr = input$PRO_log_trans)
-            })
-          })
-          
-          #### Output: PRO.user.exp.raw ####
-          output$PRO.user.exp.raw <- renderDataTable(server = FALSE,{
-            isolate({
-              validate(need(!is.null(PRO_exp_data()), "Some error is in your expression data, please check your data and re-upload it."))
-              DT::datatable(PRO_exp_data(), 
-                            #caption = 'Lipid expression data',
-                            #colnames = c(variables$PRO.exp.user.col1, colnames(variables$PRO.exp.data.user)[-1]),
-                            escape = FALSE, selection = 'none', rownames = FALSE, 
-                            class = "nowrap row-border",
-                            extensions = c('Buttons', 'Scroller'),
-                            options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                           deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                           dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                           columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-            })
-          })
-          #### Output: PRO.user.exp ####
-          output$PRO.user.exp <- renderDataTable(server = FALSE,{
-            isolate({
-              validate(need(!is.null(PRO_exp_transform_data()), "Some error is in your expression data, please check your data and re-upload it."))
-              DT::datatable(PRO_exp_transform_data(), 
-                            #caption = 'Lipid expression data',
-                            colnames = c(variables$PRO.exp.user.col1, colnames(variables$PRO.exp.data.user)[-1]),
-                            escape = FALSE, selection = 'none', rownames = FALSE, 
-                            class = "nowrap row-border",
-                            extensions = c('Buttons', 'Scroller'),
-                            options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                           deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                           dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                           columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-            })
-          })
-          #### Output: PRO.user.lipid.char ####
-          output$PRO.user.lipid.char <- renderDataTable(server = FALSE,{
-            isolate({
-              validate(need(!is.null(PRO_lipid_char_table()), "Not uploaded"))
-              DT::datatable(PRO_lipid_char_table(), 
-                            #caption = 'Lipid expression data',
-                            colnames = c(variables$PRO.lipid.char.user.col1, colnames(variables$PRO.lipid.char.tab.user)[-1]),
-                            escape = FALSE, selection = 'none', rownames = FALSE, 
-                            class = "nowrap row-border",
-                            extensions = c('Buttons', 'Scroller'),
-                            options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                           deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                           dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                           columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-            })
-          })
-          
-        }else{
-          shinyjs::hide('PRO_user_input_table_div')
-          shinyjs::disable("PRO_user_start")
-          output$PRO_Data_summary <-  renderUI({
-            NULL
-          })
-        }
-      }else{
-        if(data_check(data=PRO_Check_lipid_char_data_table(),exp_data=PRO_Check_exp_data_table(),data_type="lipid_char",file_path=input$PRO_user_char$datapath)[[2]] & 
-           data_check(exp_data=PRO_Check_exp_data_table(),data_type="exp",page="Profiling",file_path=input$PRO_user_exp$datapath,
-                      remove_na=input$PRO_rm_NA,remove_na_pct=input$PRO_rm_NA_pct)[[2]]){
-          shinyjs::show('PRO_user_input_table_div')
-          shinyjs::enable("PRO_user_start")
-          output$PRO_Data_summary <-  renderUI({
-            isolate({
-              data_summary(exp_data = PRO_Check_exp_data_table(),remove_na=input$PRO_rm_NA,remove_na_pct=input$PRO_rm_NA_pct,
-                           fill_na = input$PRO_rp_NA,fill_na_method = input$PRO_fill_NA,
-                           fill_na_Multiply = input$PRO_fill_min,
-                           PCT_tr = input$PRO_pct_trans,log_tr = input$PRO_log_trans)
-            })
-          })
-          
-          #### Output: PRO.user.exp.raw ####
-          output$PRO.user.exp.raw <- renderDataTable(server = FALSE,{
-            isolate({
-              validate(need(!is.null(PRO_exp_data()), "Some error is in your expression data, please check your data and re-upload it."))
-              DT::datatable(PRO_exp_data(), 
-                            #caption = 'Lipid expression data',
-                            #colnames = c(variables$PRO.exp.user.col1, colnames(variables$PRO.exp.data.user)[-1]),
-                            escape = FALSE, selection = 'none', rownames = FALSE, 
-                            class = "nowrap row-border",
-                            extensions = c('Buttons', 'Scroller'),
-                            options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                           deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                           dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                           columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-            })
-          })
-          #### Output: PRO.user.exp ####
-          output$PRO.user.exp <- renderDataTable(server = FALSE,{
-            isolate({
-              validate(need(!is.null(PRO_exp_transform_data()), "Some error is in your expression data, please check your data and re-upload it."))
-              DT::datatable(PRO_exp_transform_data() %>% mutate_if(is.numeric, ~round(., 5)), 
-                            #caption = 'Lipid expression data',
-                            colnames = c(variables$PRO.exp.user.col1, colnames(variables$PRO.exp.data.user)[-1]),
-                            escape = FALSE, selection = 'none', rownames = FALSE, 
-                            class = "nowrap row-border",
-                            extensions = c('Buttons', 'Scroller'),
-                            options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                           deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                           dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                           columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-            })
-          })
-          #### Output: PRO.user.lipid.char ####
-          output$PRO.user.lipid.char <- renderDataTable(server = FALSE,{
-            isolate({
-              validate(need(!is.null(PRO_lipid_char_table()), "Not uploaded"))
-              DT::datatable(PRO_lipid_char_table(), 
-                            #caption = 'Lipid expression data',
-                            colnames = c(variables$PRO.lipid.char.user.col1, colnames(variables$PRO.lipid.char.tab.user)[-1]),
-                            escape = FALSE, selection = 'none', rownames = FALSE, 
-                            class = "nowrap row-border",
-                            extensions = c('Buttons', 'Scroller'),
-                            options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                           deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                           dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                           columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-            })
-          })
-          
-        }else{
-          shinyjs::hide('PRO_user_input_table_div')
-          shinyjs::disable("PRO_user_start")
-          output$PRO_Data_summary <-  renderUI({
-            NULL
-          })
-        }
-      }
-      
-    }) #observe
-    updateProgressBar(
-      session = session,
-      id = "PRO_user_progress",
-      value = 100
-    )
-    closeSweetAlert(session = session)
-  #}) #isolate
-  
-}) #observeEvent(input$PRO_user_upload
+  })
+}) ## observeEvent # input$PRO_user_upload
+
+#### Output: PRO.data.check.progress ####
+output$PRO.data.check.progress <- shiny::renderUI({
+  shiny::validate(shiny::need(!is.null(variables$PRO.data.check.progress), ""))
+  variables$PRO.data.check.progress
+})
+
+#### Output: PRO.raw.abundance ####
+output$PRO.raw.abundance <- DT::renderDataTable(server=FALSE, {
+  shiny::validate(shiny::need(!is.null(variables$PRO.raw.abundance), ""))
+  DT::datatable(variables$PRO.raw.abundance,
+                escape=FALSE, selection='none', rownames=FALSE,
+                class="nowrap row-border",
+                extensions=c('Buttons', 'Scroller'),
+                options=list(scrollX=TRUE, pageLength=5, autoWidth=FALSE,
+                               deferRender=TRUE, scrollY=200, scroller=TRUE, #Scroller
+                               dom='Bfrtip', buttons=list('csv', 'copy'), #Buttons
+                               columnDefs=list(list(className='dt-center', targets="_all"))))
+})
 
 #### control user reset button ####
-observeEvent(input$PRO_user_reset, {
-  
+shiny::observeEvent(input$PRO_user_reset, {
+
   #### shinyjs show/hide main panel ####
   shinyjs::hide('PRO_user_mainPanel_div')
-  
+
   #### shiny show/hide tab ####
-  hideTab(inputId = 'PRO_analysis_tab', target = 'Cross-sample variability')
-  hideTab(inputId = 'PRO_analysis_tab', target = 'Dimensionality reduction')
-  hideTab(inputId = 'PRO_analysis_tab', target = 'Correlation heatmap')
-  hideTab(inputId = 'PRO_analysis_tab', target = 'Lipid characteristics profiling')
-  
+  shiny::hideTab(inputId='PRO_analysis_tab', target='Cross-sample variability')
+  shiny::hideTab(inputId='PRO_analysis_tab', target='Dimensionality reduction')
+  shiny::hideTab(inputId='PRO_analysis_tab', target='Correlation heatmap')
+  shiny::hideTab(inputId='PRO_analysis_tab', target='Lipid characteristics profiling')
+
   #### shinyjs reset control panel ####
   shinyjs::reset('PRO_user_reset_div')
-  
+
   #### clear variables ####
-  variables$PRO.exp.data.user = NULL
-  variables$PRO.lipid.char.tab.user = NULL
-  
+  variables$PRO.raw.abundance             <- NULL
+  variables$PRO.SE                        <- NULL
+  variables$PRO.SE.list                   <- NULL
+  variables$PRO.exp.user.col1             <- NULL
+  variables$PRO.lipid.char.user.col1      <- NULL
+  variables$PRO.pca.result                <- NULL
+  variables$PRO.tsne.result               <- NULL
+  variables$PRO.umap.result               <- NULL
+  variables$PRO.corr.heatmap.result       <- NULL
+  variables$PRO.data.check.progress       <- htmltools::HTML('<div style="font-size: 0px;"><h2>Upload progress</h2><h4>(1/2) Check upload data format.</h4></div>')
+
 }) #observeEvent(input$PRO_user_reset
 
 #### control user upload button ####
-observe({
-  
+shiny::observe({
   if(is.null(input$PRO_user_exp)){
     shinyjs::disable("PRO_user_upload")
   }else{
     shinyjs::enable("PRO_user_upload")
   }
-  
 }) #observe
 
+shiny::observeEvent(input$PRO_processing_start, {
+  shiny::isolate({
+    tryCatch(
+      {
+        shiny::withProgress(message='Profiling analysis', style='notification', detail="Data processing", value=0, {
+          imputation_param <- switch(input$PRO_fill_NA,
+                                     mean=NULL,
+                                     median=NULL,
+                                     min=input$PRO_fill_min,
+                                     QRILC=input$PRO_fill_QRILC,
+                                     SVD=input$PRO_fill_param,
+                                     KNN=input$PRO_fill_KNN,
+                                     IRMI=NULL,
+                                     PPCA=input$PRO_fill_param,
+                                     BPCA=input$PRO_fill_param)
+          if(is.numeric(input$PRO_filtration_param)){
+            filtration_param <- input$PRO_filtration_param
+            if(input$PRO_filtration_param > 100){
+              filtration_param <- 100
+              shiny::showNotification("The value of remove features with more than % missing values must be between 5 and 100, so it is calculated by replacing it with 100.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_filtration_param', value=100)
+            }else if(input$PRO_filtration_param < 5){
+              filtration_param <- 5
+              shiny::showNotification("The value of remove features with more than % missing values must be between 5 and 100, so it is calculated by replacing it with 5.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_filtration_param', value=5)
+            }
+          }else{
+            filtration_param <- 70
+            shiny::showNotification("The value of remove features with more than % missing values must be numeric, so it is calculated by replacing it with 70", type="warning")
+            shiny::updateNumericInput(inputId='PRO_filtration_param', value=70)
+          }
+          if(!is.null(imputation_param)){
+            if(input$PRO_fill_NA == 'min'){
+              if(is.numeric(imputation_param)){
+                if(imputation_param > 0.5){
+                  imputation_param <- 0.5
+                  shiny::showNotification("The value of multiply by minimum must be between 0.1 and 0.5, so it is calculated by replacing it with 0.5.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_min', value=0.5)
+                }else if(imputation_param < 0.1){
+                  imputation_param <- 0.1
+                  shiny::showNotification("The value of multiply by minimum must be between 0.1 and 0.5, so it is calculated by replacing it with 0.1.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_min',value=0.1)
+                }
+              }else{
+                imputation_param <- 0.5
+                shiny::showNotification("The value of multiply by minimum must be numeric, so it is calculated by replacing it with 0.5.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_fill_min',value=0.5)
+              }
+            }else if(input$PRO_fill_NA == 'QRILC'){
+              if(is.numeric(imputation_param)){
+                if(imputation_param > 1){
+                  imputation_param <- 1
+                  shiny::showNotification("The value of tune sigma must be between 0.1 and 1, so it is calculated by replacing it with 1.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_QRILC', value=1)
+                }else if(imputation_param < 0.1){
+                  imputation_param <- 0.1
+                  shiny::showNotification("The value of tune sigma must be between 0.1 and 1, so it is calculated by replacing it with 0.1.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_QRILC', value=0.1)
+                }
+              }else{
+                imputation_param <- 1
+                shiny::showNotification("The value of tune sigma must be numeric, so it is calculated by replacing it with 1.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_fill_QRILC', value=1)
+              }
+            }else if(input$PRO_fill_NA == 'SVD'){
+              if(is.numeric(imputation_param)){
+                if(imputation_param > 10){
+                  imputation_param <- 10
+                  shiny::showNotification("The value of nPCs must be between 1 and 10, so it is calculated by replacing it with 10.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_param', value=10)
+                }else if(imputation_param < 1){
+                  imputation_param <- 1
+                  shiny::showNotification("The value of nPCs must be between 1 and 10, so it is calculated by replacing it with 1.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_param', value=1)
+                }
+              }else{
+                imputation_param <- 3
+                shiny::showNotification("The value of nPCs must be numeric, so it is calculated by replacing it with 3.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_fill_param', value=3)
+              }
+            }else if(input$PRO_fill_NA == 'KNN'){
+              if(is.numeric(imputation_param)){
+                if(imputation_param > 10){
+                  imputation_param <- 10
+                  shiny::showNotification("The number of neighbors must be between 1 and 10, so it is calculated by replacing it with 10.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_KNN', value=10)
+                }else if(imputation_param < 1){
+                  imputation_param <- 1
+                  shiny::showNotification("The number of neighbors must be between 1 and 10, so it is calculated by replacing it with 1.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_KNN', value=1)
+                }
+              }else{
+                imputation_param <- 3
+                shiny::showNotification("The number of neighbors must be numeric, so it is calculated by replacing it with 3.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_fill_KNN', value=3)
+              }
+            }else if(input$PRO_fill_NA == 'PPCA'){
+              if(is.numeric(imputation_param)){
+                if(imputation_param > 10){
+                  imputation_param <- 10
+                  shiny::showNotification("The value of nPCs must be between 1 and 10, so it is calculated by replacing it with 10.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_param', value=10)
+                }else if(imputation_param < 1){
+                  imputation_param <- 1
+                  shiny::showNotification("The value of nPCs must be between 1 and 10, so it is calculated by replacing it with 1.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_param', value=1)
+                }
+              }else{
+                imputation_param <- 3
+                shiny::showNotification("The value of nPCs must be numeric, so it is calculated by replacing it with 3.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_fill_param', value=3)
+              }
+            }else if(input$PRO_fill_NA == 'BPCA'){
+              if(is.numeric(imputation_param)){
+                if(imputation_param > 10){
+                  imputation_param <- 10
+                  shiny::showNotification("The value of nPCs must be between 1 and 10, so it is calculated by replacing it with 10.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_param', value=10)
+                }else if(imputation_param < 1){
+                  imputation_param <- 1
+                  shiny::showNotification("The value of nPCs must be between 1 and 10, so it is calculated by replacing it with 1.", type="warning")
+                  shiny::updateNumericInput(inputId='PRO_fill_param', value=1)
+                }
+              }else{
+                imputation_param <- 3
+                shiny::showNotification("The value of nPCs must be numeric, so it is calculated by replacing it with 3.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_fill_param',value=3)
+              }
+            }
+          }
+          variables$PRO.processed.SE <- LipidSigR::data_process(
+            se=variables$PRO.SE, exclude_missing=input$PRO_rm_NA,
+            exclude_missing_pct=filtration_param,
+            replace_na_method=input$PRO_fill_NA, replace_na_method_ref=imputation_param,
+            normalization=input$PRO_normalization, transform=input$PRO_transformation)
+          variables$PRO.processed.SE.list <- LipidSigR::extract_summarized_experiment(variables$PRO.processed.SE)
+          variables$PRO.processed.abundance <- variables$PRO.processed.SE.list$abundance
+          #### update input ####
+          Nsample <- ncol(variables$PRO.processed.abundance)-1
+          shiny::updateNumericInput(session, inputId='PRO_dbscan_minPts', max=Nsample)
+          VALUE1 <- ifelse(Nsample %% 3 == 0, floor(Nsample/3)-1, floor(Nsample/3))
+          VALUE2 <- ifelse(VALUE1 < 5, VALUE1, 5)
+          shiny::updateNumericInput(session, inputId='PRO_tsne_perplexity', value=VALUE2, max=VALUE1)
+          shiny::updateNumericInput(session, inputId='PRO_umap_n_neighbors', value=ifelse(Nsample < 15, Nsample, 15), max=Nsample)
+          shiny::updateSliderInput(session, "PRO_kmeans_group", max=Nsample-1)
+          shiny::updateSliderInput(session, "PRO_pam_group", max=Nsample-1)
+          shiny::updateSliderInput(session, "PRO_hclust_group", max=Nsample)
+          
+          variables$PRO.processed.lipid.char.tab <- variables$PRO.processed.SE.list$lipid_char_table
+          variables$PRO.processed.lipid.char.tab <- char.tab.url(variables$PRO.processed.lipid.char.tab)
+          variables$PRO.processed.plot <- LipidSigR::plot_data_process(variables$PRO.SE, variables$PRO.processed.SE)
+          variables$PRO.data.summary.div <- data_summary(se = variables$PRO.SE,
+                                                         analysis_type = "Profiling",
+                                                         exclude_missing = input$PRO_rm_NA,
+                                                         exclude_missing_pct = filtration_param,
+                                                         replace_na_method = input$PRO_fill_NA,
+                                                         replace_na_method_ref = imputation_param,
+                                                         normalization = input$PRO_normalization,
+                                                         transform = input$PRO_transformation)
+          
+          variables$PRO.lipid.char <- data.frame(aspect=names(LipidSigR::list_lipid_char(variables$PRO.processed.SE)$common_list),
+                                                 characteristic=LipidSigR::list_lipid_char(variables$PRO.processed.SE)$common_list) %>%
+            dplyr::mutate(aspect=factor(aspect),
+                          characteristic=factor(characteristic)) %>%
+            dplyr::arrange(characteristic)
+          #### update PRO lipid characteristic select input ####
+          output$PRO.corr.heatmap.char.select <- shiny::renderUI({
+            shiny::selectInput(
+              inputId='PRO_corr_heatmap_char', label='Characteristics:',
+              choices=split(as.list(levels(variables$PRO.lipid.char$characteristic)), variables$PRO.lipid.char$aspect),
+              selected='class', multiple=FALSE)
+          })
+          output$PRO.lipid.char <- shiny::renderUI({
+            shiny::selectInput(
+              inputId='PRO_lipid_char', label='Select the lipid characteristics:',
+              choices=split(as.list(levels(variables$PRO.lipid.char$characteristic)), variables$PRO.lipid.char$aspect),
+              selected='class', multiple=FALSE)
+          })
+          output$CORR.class.linear.lipid.char <- shiny::renderUI({
+            shiny::selectInput(inputId='CORR_class_linear_lipid_char', label='Select the lipid characteristic:',
+                               choices=split(as.list(levels(variables$CORR.class.lipid.char$characteristic)), variables$CORR.class.lipid.char$aspect),
+                               selected='class', multiple=FALSE)
+          })
+          
+          output$PRO.data.check.progress <- shiny::renderUI({
+            htmltools::tags$div(
+              style="font-size: 0px;",
+              htmltools::h2('Upload progress'),
+              htmltools::h4('(3/3) Data Processing finish.'))
+          })
+          shinyjs::show('data_summary_div')
+          shinyjs::show('data_process_description_div')
+          shinyjs::show('data_process_table_div')
+          shinyjs::show('PRO_start_div')
+          variables$PRO.processed.plot.download.log <- 1
+          shiny::incProgress(0.34, detail='Data processing finish')
+        })
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Data process error!",
+          text=as.character(e$message),
+          type="error")
+        #### shinyjs show/hide results ####
+        shinyjs::hide('data_summary_div')
+        shinyjs::hide('data_process_description_div')
+        shinyjs::hide('data_process_table_div')
+        shinyjs::hide('PRO_start_div')
+      }
+    )
+  })
+}) ## observeEvent # input$PRO_processing_start
+
+shiny::observeEvent(input$PRO.processed.download.start,{
+  shiny::isolate({
+    tryCatch(
+      {
+        if(variables$PRO.processed.plot.download.log == 1){
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download", display_pct=TRUE, value=0)
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=33)
+          output$PRO.processed.download <- shiny::downloadHandler(
+            filename=function(){
+              paste("PRO.processed.plot.zip", sep="")
+            },
+            content=function(file){
+              temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+              dir.create(temp_directory)
+              ## Boxplot before process ##
+              grDevices::pdf(file.path(temp_directory,'BoxPlot.before.process.pdf'), width=8, height=6)
+              print(variables$PRO.processed.plot$static_boxPlot_before)
+              grDevices::dev.off()
+              ## Boxplot after process ##
+              grDevices::pdf(file.path(temp_directory,'Boxplot.after.process.pdf'), width=8, height=6)
+              print(variables$PRO.processed.plot$static_boxPlot_after)
+              grDevices::dev.off()
+              ## Densityplot before process ##
+              grDevices::pdf(file.path(temp_directory,'Densityplot.before.process.pdf'), width=8, height=6)
+              print(variables$PRO.processed.plot$static_densityPlot_before)
+              grDevices::dev.off()
+              ## Densityplot after process ##
+              grDevices::pdf(file.path(temp_directory,'Densityplot.after.process.pdf'), width=8, height=6)
+              print(variables$PRO.processed.plot$static_densityPlot_after)
+              grDevices::dev.off()
+              ## zip all file ##
+              zip::zip(zipfile=file, files=dir(temp_directory), root=temp_directory)
+            },
+            contentType="application/zip"
+          )
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=66)
+          variables$PRO.processed.plot.download.log <- 2
+          shinyjs::runjs("document.getElementById('PRO.processed.download.start').click();")
+        }else{
+          shinyjs::runjs("document.getElementById('PRO.processed.download').click();")
+          shinyWidgets::updateProgressBar(
+            session=session, id="data_progress", title="done", value=100)
+          shinyWidgets::closeSweetAlert(session=session)
+        }
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Data process download error!",
+          text=as.character(e$message),
+          type="error")
+      }
+    )
+  })
+})
+
+#### Output: PRO.processed.abundance ####
+output$PRO.processed.abundance <- DT::renderDataTable(server=FALSE, {
+   shiny::validate(need(!is.null(variables$PRO.processed.abundance), ""))
+   DT::datatable(variables$PRO.processed.abundance %>%
+                   dplyr::mutate_if(is.numeric, ~round(., 5)),
+                 escape=FALSE, selection='none', rownames=FALSE,
+                 class="nowrap row-border",
+                 extensions=c('Buttons', 'Scroller','FixedColumns'),
+                 options=list(scrollX=TRUE, pageLength=5, autoWidth=FALSE,
+                                deferRender=TRUE, scrollY=200, scroller=TRUE, #Scroller
+                                dom='Bfrtip', buttons=list('csv', 'copy'), #Buttons
+                                columnDefs=list(list(className='dt-center', targets="_all"))))
+})
+#### Output: PRO.processed.lipid.char.tab ####
+output$PRO.processed.lipid.char.tab <- DT::renderDataTable(server=FALSE,{
+   shiny::validate(shiny::need(!is.null(variables$PRO.processed.lipid.char.tab), ""))
+   DT::datatable(variables$PRO.processed.lipid.char.tab %>%
+                   dplyr::select(-c(LION.ID,LIPID.MAPS.ID,SwissLipids.ID,HMDB.ID,ChEBI.ID,KEGG.ID,LipidBank.ID,PubChem.CID,MetaNetX.ID,PlantFA.ID)) %>%
+                   dplyr::mutate_if(is.numeric, ~round(., 5)),
+                 escape=FALSE, selection='none', rownames=FALSE,
+                 class="nowrap row-border",
+                 extensions=c('Buttons', 'Scroller','FixedColumns'),
+                 options=list(scrollX=TRUE, pageLength=5, autoWidth=FALSE,
+                                deferRender=TRUE, scrollY=200, scroller=TRUE, #Scroller
+                                dom='Bfrtip', buttons=list('csv', 'copy'), #Buttons
+                                columnDefs=list(list(className='dt-center', targets="_all"))))
+})
+#### Output: PRO.lipid.id ####
+output$PRO.lipid.id <- DT::renderDataTable(server=FALSE, {
+  shiny::validate(shiny::need(!is.null(variables$PRO.processed.lipid.char.tab), ""))
+  DT::datatable(variables$PRO.processed.lipid.char.tab %>%
+                  dplyr::select(feature,LION.ID,LIPID.MAPS.ID,SwissLipids.ID,HMDB.ID,ChEBI.ID,KEGG.ID,LipidBank.ID,PubChem.CID,MetaNetX.ID,PlantFA.ID) %>%
+                  dplyr::mutate_if(is.numeric, ~round(., 5)),
+                escape=FALSE, selection='none', rownames=FALSE,
+                class="nowrap row-border",
+                extensions=c('Buttons', 'Scroller','FixedColumns'),
+                options=list(scrollX=TRUE, pageLength=5, autoWidth=FALSE,
+                               deferRender=TRUE, scrollY=200, scroller=TRUE, #Scroller
+                               dom='Bfrtip', buttons=list('csv', 'copy'), #Buttons
+                               fixedColumns=list(leftColumns=1)))
+})
+#### Output: PRO.Data.summary ####
+output$PRO.Data.summary <-  shiny::renderUI({
+  shiny::validate(shiny::need(!is.null(variables$PRO.data.summary.div), ""))
+  variables$PRO.data.summary.div
+})
+
+#### Output: PRO.before.processed.boxplot ####
+output$PRO.before.processed.boxplot <- plotly::renderPlotly({
+  shiny::validate(shiny::need(!is.null(variables$PRO.processed.plot$interactive_boxPlot_before), ""))
+  variables$PRO.processed.plot$interactive_boxPlot_before
+})
+
+#### Output: PRO.after.processed.boxplot ####
+output$PRO.after.processed.boxplot <- plotly::renderPlotly({
+  shiny::validate(shiny::need(!is.null(variables$PRO.processed.plot$interactive_boxPlot_after), ""))
+  variables$PRO.processed.plot$interactive_boxPlot_after
+})
+
+#### Output: PRO.before.processed.density ####
+output$PRO.before.processed.density <- plotly::renderPlotly({
+  shiny::validate(shiny::need(!is.null(variables$PRO.processed.plot$interactive_densityPlot_before), ""))
+  variables$PRO.processed.plot$interactive_densityPlot_before
+})
+
+#### Output: PRO.after.processed.density ####
+output$PRO.after.processed.density <- plotly::renderPlotly({
+  shiny::validate(shiny::need(!is.null(variables$PRO.processed.plot$interactive_densityPlot_after), ""))
+  variables$PRO.processed.plot$interactive_densityPlot_after
+})
 
 ##################################
 ####  Profiling analysis tab  ####
 ##################################
 
-#### control hide/show tabpanel: input$PRO_demo_start ####
-observeEvent(input$PRO_demo_start, {
-  
-  shinyjs::show('PRO_tabPanel_div')
-  showTab(inputId = 'PRO_analysis_tab', target = 'Cross-sample variability')
-  showTab(inputId = 'PRO_analysis_tab', target = 'Dimensionality reduction')
-  showTab(inputId = 'PRO_analysis_tab', target = 'Correlation heatmap')
-  showTab(inputId = 'PRO_analysis_tab', target = 'Lipid characteristics profiling')
-  
-  #### shinyjs show/hide results ####
-  shinyjs::hide('PRO_dim_redu_result_div')
-  shinyjs::hide('PRO.corr.heatmap.lipid')
-  shinyjs::hide('PRO.corr.heatmap.sample')
-  
-  
-}) #observeEvent(input$PRO_demo_start
+#### control hide/show tabpanel: input$PRO_start ####
+shiny::observeEvent(input$PRO_start, {
 
-#### control hide/show tabpanel: input$PRO_user_start ####
-observeEvent(input$PRO_user_start, {
-  
-  shinyjs::show('PRO_tabPanel_div')
-  showTab(inputId = 'PRO_analysis_tab', target = 'Cross-sample variability')
-  showTab(inputId = 'PRO_analysis_tab', target = 'Dimensionality reduction')
-  showTab(inputId = 'PRO_analysis_tab', target = 'Correlation heatmap')
-  
-  if(is.null(input$PRO_user_char) | is.null(variables$PRO.lipid.char.tab.user)){
-    hideTab(inputId = 'PRO_analysis_tab', target = 'Lipid characteristics profiling')
-  }else{
-    showTab(inputId = 'PRO_analysis_tab', target = 'Lipid characteristics profiling')
-  }
-  
-  #### shinyjs show/hide results ####
-  shinyjs::hide('PRO_dim_redu_result_div')
-  shinyjs::hide('PRO.corr.heatmap.lipid')
-  shinyjs::hide('PRO.corr.heatmap.sample')
-  
-}) #observeEvent(input$PRO_user_start
+  isolate({
+    shinyjs::show('PRO_tabPanel_div')
+    shiny::showTab(inputId='PRO_analysis_tab', target='Cross-sample variability')
+    shiny::showTab(inputId='PRO_analysis_tab', target='Dimensionality reduction')
+    shiny::showTab(inputId='PRO_analysis_tab', target='Correlation heatmap')
+    shiny::showTab(inputId='PRO_analysis_tab', target='Lipid characteristics profiling')
+    variables$cross.sample.variability <- LipidSigR::cross_sample_variability(se=variables$PRO.SE)
+    variables$PRO.cross.sample.variability.download.log <- 1
+    #### shinyjs show/hide results ####
+    shinyjs::hide('PRO_dim_redu_result_div')
+  })
 
+}) #observeEvent(input$PRO_start
 
 ############################################
 ############################################
@@ -553,31 +630,80 @@ observeEvent(input$PRO_user_start, {
 ############################################
 ############################################
 
-#### Function: exp_profilling ####
-exp_pro_result <- reactive({
-  if(!is.null(PRO_exp_data())){
-    exp_profilling(PRO_exp_data()) 
-  }else{
-    NULL
-  }
-})
-
-#### Output: PRO.num.of.expressed.lipid ####
-output$PRO.num.of.expressed.lipid <- renderPlotly({
-  exp_pro_result()$i.expr.lip
+#### Output: PRO.lipid.number ####
+output$PRO.lipid.number <- plotly::renderPlotly({
+  variables$cross.sample.variability$interactive_lipid_number_barPlot
 })
 
 #### Output: PRO.lipid.amount ####
-output$PRO.lipid.amount <- renderPlotly({
-  exp_pro_result()$i.p.amount
+output$PRO.lipid.amount <- plotly::renderPlotly({
+  variables$cross.sample.variability$interactive_lipid_amount_barPlot
 })
 
-#### Output: PRO.expr.distribution ####
-output$PRO.expr.distribution <- renderPlotly({
-  exp_pro_result()$p.hist.value
+#### Output: PRO.lipid.distribution ####
+output$PRO.lipid.distribution <- plotly::renderPlotly({
+  variables$cross.sample.variability$interactive_lipid_distribution
 })
 
-
+shiny::observeEvent(input$PRO.cross.sample.variability.download.start,{
+  shiny::isolate({
+    tryCatch(
+      {
+        if(variables$PRO.cross.sample.variability.download.log == 1){
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download", display_pct=TRUE, value=0)
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=33)
+          output$PRO.cross.sample.variability.download <- shiny::downloadHandler(
+            filename=function(){
+              paste("PRO.cross.sample.variability.zip", sep="")
+            },
+            content=function(file){
+              temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+              dir.create(temp_directory)
+              ## Histogram of expressed lipid numbers ##
+              grDevices::pdf(file.path(temp_directory,'Lipid.number.pdf'), width=8, height=6)
+              print(variables$cross.sample.variability$static_lipid_number_barPlot)
+              grDevices::dev.off()
+              ## Histogram of lipid amount ##
+              grDevices::pdf(file.path(temp_directory,'Lipid.amount.pdf'), width=8, height=6)
+              print(variables$cross.sample.variability$static_lipid_amount_barPlot)
+              grDevices::dev.off()
+              ## Density plot of lipid abundance distribution ##
+              grDevices::pdf(file.path(temp_directory,'Lipid.distribution.pdf'), width=8, height=6)
+              print(variables$cross.sample.variability$static_lipid_distribution)
+              grDevices::dev.off()
+              ## table  ##
+              utils::write.csv(variables$cross.sample.variability$table_total_lipid, file=file.path(temp_directory,'Total.lipid.csv'))
+              utils::write.csv(variables$cross.sample.variability$table_lipid_distribution, file=file.path(temp_directory,'Lipid.distribution.csv'))
+              ## zip all file ##
+              zip::zip(zipfile=file, files=dir(temp_directory), root=temp_directory)
+            },
+            contentType="application/zip"
+          )
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=66)
+          variables$PRO.cross.sample.variability.download.log <- 2
+          shinyjs::runjs("document.getElementById('PRO.cross.sample.variability.download.start').click();")
+        }else{
+          shinyjs::runjs("document.getElementById('PRO.cross.sample.variability.download').click();")
+          shinyWidgets::updateProgressBar(
+            session=session, id="data_progress", title="done", value=100)
+          shinyWidgets::closeSweetAlert(session=session)
+        }
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Cross-sample variability download error!",
+          text=as.character(e$message),
+          type="error")
+      }
+    )
+  })
+})
 
 ############################################
 ############################################
@@ -590,402 +716,627 @@ output$PRO.expr.distribution <- renderPlotly({
 #######################
 
 #### dbscan ####
-#### update numeric input minPts ####
-observe({
-  updateNumericInput(session, 
-                     inputId = 'PRO_dbscan_minPts', 
-                     max = (PRO_sample_count()-1)
-  ) #updateNumericInput
-})
+
+shiny::observeEvent(input$PRO_cluster_method, {
+  isolate({
+    shinyjs::show('PRO_dim_redu_result_div')
+  })
+}) ## observeEvent # PRO_cluster_method
+
+shiny::observeEvent(input$PRO_dim_redu_start, {
+  shiny::isolate({
+    tryCatch(
+      {
+        shinyjs::show('PRO_dim_redu_result_div')
+        ## cluster method parameter ##
+        cluster_num <- switch(input$PRO_cluster_method,
+                              kmeans=input$PRO_kmeans_group,
+                              kmedoids=input$PRO_pam_group,
+                              hclustering=input$PRO_hclust_group,
+                              dbscan=NULL)
+        kmedoids_metric <- if(input$PRO_cluster_method == 'kmedoids'){ input$PRO_pam_metric }else{ NULL }
+        distfun <- if(input$PRO_cluster_method == 'hclustering'){ input$PRO_hclust_dist }else{ NULL }
+        hclustfun <- if(input$PRO_cluster_method == 'hclustering'){ input$PRO_hclust_hclust }else{ NULL }
+        eps <- if(input$PRO_cluster_method == 'dbscan'){ input$PRO_dbscan_eps }else{ NULL }
+        minPts <- if(input$PRO_cluster_method == 'dbscan'){ input$PRO_dbscan_minPts }else{ NULL }
+        n_PC <- if(input$PRO_pca_contrib_PC == '1_2'){ c(1, 2) }else{ as.numeric(input$PRO_pca_contrib_PC) }
+        
+        if(input$PRO_cluster_method == 'dbscan'){
+          if(is.numeric(eps)){
+            if(eps < 0.1){
+              eps <- 0.1
+              shiny::showNotification("The epsilon must be greater than 0.1, so it is calculated by replacing it with 0.1.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_dbscan_eps', value=0.1)
+            }
+          }else{
+            eps <- 0.5
+            shiny::showNotification("The epsilon must be numeric, so it is calculated by replacing it with 0.5.", type="warning")
+            shiny::updateNumericInput(inputId='PRO_dbscan_eps', value=0.5)
+          }
+          
+          if(is.numeric(minPts)){
+            if(minPts > 22){
+              minPts <- 22
+              shiny::showNotification("The minPts must be between 1 and 22, so it is calculated by replacing it with 22.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_dbscan_minPts', value=22)
+            }else if(input$PRO_dbscan_minPts < 1){
+              minPts <- 1
+              shiny::showNotification("The minPts must be between 1 and 22, so it is calculated by replacing it with 1.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_dbscan_minPts', value=1)
+            }
+          }else{
+            minPts <- 1
+            shiny::showNotification("The minPts must be numeric, so it is calculated by replacing it with 1.", type="warning")
+            shiny::updateNumericInput(inputId='PRO_dbscan_minPts',value=1)
+          }
+        }
+        
+        if(input$PRO_dim_redu_method == 'pca'){
+          shinyjs::hide('PRO_dim_redu_result_tsne_div')
+          shinyjs::hide('PRO_dim_redu_result_umap_div')
+          variables$PRO.dim.redu.pca.download.log <- 1
+          variables$PRO.dim.redu.pca.topN.download.log <- 1
+          variables$PRO.pca.result <- LipidSigR::dr_pca(
+            processed_se=variables$PRO.processed.SE, scaling=TRUE,
+            centering=TRUE, clustering=input$PRO_cluster_method,
+            cluster_num=cluster_num, kmedoids_metric=kmedoids_metric, distfun=distfun,
+            hclustfun=hclustfun, eps=eps, minPts=minPts, feature_contrib_pc=n_PC, plot_topN=input$PRO_pca_variable_topN)
+          
+          if(!is.null(variables$PRO.pca.result)){
+            VALUE <- ifelse(nrow(variables$PRO.pca.result$table_pca_contribution) < 10, nrow(variables$PRO.pca.result$table_pca_contribution), 10)
+            shiny::updateSliderInput(session,
+                                     inputId='PRO_pca_variable_topN',
+                                     value=VALUE,
+                                     max=nrow(variables$PRO.pca.result$table_pca_contribution))
+            shiny::updateSliderInput(session,
+                                     inputId='PRO_pca_contrib_topN',
+                                     value=VALUE,
+                                     max=nrow(variables$PRO.pca.result$table_pca_contribution))
+            shinyjs::show('PRO_dim_redu_result_pca_div')
+          }
+        }else if(input$PRO_dim_redu_method == 'tsne'){
+          shinyjs::hide('PRO_dim_redu_result_pca_div')
+          shinyjs::hide('PRO_dim_redu_result_umap_div')
+          if(is.numeric(input$PRO_tsne_perplexity)){
+            perplexity <- input$PRO_tsne_perplexity
+            if(input$PRO_tsne_perplexity > 7){
+              perplexity <- 7
+              shiny::showNotification("The perplexity must be between 3 and 7, so it is calculated by replacing it with 7.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_tsne_perplexity', value=7)
+            }else if(input$PRO_tsne_perplexity < 3){
+              perplexity <- 3
+              shiny::showNotification("The perplexity must be between 3 and 7, so it is calculated by replacing it with 3.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_tsne_perplexity', value=3)
+            }
+          }else{
+            perplexity <- 5
+            shiny::showNotification("The perplexity must be numeric, so it is calculated by replacing it with 5.", type="warning")
+            shiny::updateNumericInput(inputId='PRO_tsne_perplexity', value=5)
+          }
+          if(is.numeric(input$PRO_tsne_max_iter)){
+            max_iter <- input$PRO_tsne_max_iter
+            if(input$PRO_tsne_max_iter > 5000){
+              max_iter <- 5000
+              shiny::showNotification("The number of iterations must be between 100 and 5000, so it is calculated by replacing it with 5000.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_tsne_max_iter', value=5000)
+            }else if(input$PRO_tsne_max_iter < 100){
+              max_iter <- 100
+              shiny::showNotification("The number of iterations must be between 100 and 5000, so it is calculated by replacing it with 100.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_tsne_max_iter', value=100)
+            }
+          }else{
+            max_iter <- 500
+            shiny::showNotification("The number of iterations must be numeric, so it is calculated by replacing it with 500.", type="warning")
+            shiny::updateNumericInput(inputId='PRO_tsne_max_iter', value=500)
+          }
+          variables$PRO.dim.redu.tsne.download.log <- 1
+          variables$PRO.tsne.result <- LipidSigR::dr_tsne(
+            processed_se=variables$PRO.processed.SE,
+            pca=TRUE, perplexity=perplexity, max_iter=max_iter,
+            clustering=input$PRO_cluster_method, cluster_num=cluster_num,
+            kmedoids_metric=kmedoids_metric, distfun=distfun,
+            hclustfun=hclustfun, eps=eps, minPts=minPts)
+          shinyjs::show('PRO_dim_redu_result_tsne_div')
+          
+        }else if(input$PRO_dim_redu_method == 'umap'){
+          shinyjs::hide('PRO_dim_redu_result_pca_div')
+          shinyjs::hide('PRO_dim_redu_result_tsne_div')
+          if(is.numeric(input$PRO_umap_n_neighbors)){
+            n_neighbors <- input$PRO_umap_n_neighbors
+            if(input$PRO_umap_n_neighbors > 23){
+              n_neighbors <- 23
+              shiny::showNotification("The number of neighbors must be between 2 and 23, so it is calculated by replacing it with 23.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_umap_n_neighbors', value=23)
+            }else if(input$PRO_umap_n_neighbors < 2){
+              n_neighbors <- 2
+              shiny::showNotification("The number of neighbors must be between 2 and 23, so it is calculated by replacing it with 2.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_umap_n_neighbors', value=2)
+            }
+          }else{
+            n_neighbors <- 15
+            shiny::showNotification("The number of neighbors must be numeric, so it is calculated by replacing it with 15.", type="warning")
+            shiny::updateNumericInput(inputId='PRO_umap_n_neighbors', value=15)
+          }
+          variables$PRO.dim.redu.umap.download.log <- 1
+          variables$PRO.umap.result <- LipidSigR::dr_umap(
+            processed_se=variables$PRO.processed.SE,
+            n_neighbors=n_neighbors, scaling=TRUE,
+            umap_metric=input$PRO_umap_metric,
+            clustering=input$PRO_cluster_method, cluster_num=cluster_num,
+            kmedoids_metric=kmedoids_metric, distfun=distfun,
+            hclustfun=hclustfun, eps=eps, minPts=minPts)
+          shinyjs::show('PRO_dim_redu_result_umap_div')
+        }
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Dimensionality reduction error!",
+          text=as.character(e$message),
+          type="error")
+        #### shinyjs show/hide results ####
+        shinyjs::hide('PRO_dim_redu_result_div')
+      }
+    )
+  })
+}) ## observeEvent # PRO_dim_redu_start
 
 #### control reset button ####
-observeEvent(input$PRO_dim_redu_reset,{
-  
+shiny::observeEvent(input$PRO_dim_redu_reset, {
+
   #### shinyjs show/hide results ####
   shinyjs::hide('PRO_dim_redu_result_div')
-  
+
   #### shinyjs reset control panel ####
   shinyjs::reset("PRO_dim_redu_reset_div")
-  
-}) #observeEvent(input$PRO_dim_redu_reset
 
-#### control start button ####
-observeEvent(input$PRO_dim_redu_start,{
-  observeEvent(input$PRO_dim_redu_method,{
-    if(input$PRO_dim_redu_method == 'pca'){
-      feature_num_check=2
-      sample_num_check=6
-      shinyjs::hide('PRO_dim_redu_result_div')
-    }else if(input$PRO_dim_redu_method == 'tsne'){
-      feature_num_check=4
-      sample_num_check=2
-      shinyjs::hide('PRO_dim_redu_result_div')
-    }else{
-      feature_num_check=2
-      sample_num_check=2
-      shinyjs::hide('PRO_dim_redu_result_div')
-    }
-    
-    
-    if(submit_check(transform_data=PRO_exp_transform_data(),check_NA=T,feature_num=feature_num_check,sample_num=sample_num_check)[[1]]!=TRUE){
-      showModal(modalDialog(
-        title = "Important message",
-        submit_check(transform_data=PRO_exp_transform_data(),check_NA=T,feature_num=feature_num_check,sample_num=sample_num_check)[[2]],
-        easyClose = TRUE
-      ))
-      shinyjs::hide('PRO_dim_redu_result_div')
-    }else{
-      #### shinyjs show/hide results ####
-      shinyjs::show('PRO_dim_redu_result_div')
-    }
-    #### Function: PCA ####
-    isolate({
-      if(input$PRO_dim_redu_method == 'pca'){
-        
-        if(input$PRO_cluster_method == 'kmeans'){
-          isolate({
-            variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            scaling=input$PRO_pca_scale, 
-                                            centering=input$PRO_pca_center, 
-                                            cluster_method=input$PRO_cluster_method, 
-                                            group_num = input$PRO_kmeans_group)
-          })
-        }else if(input$PRO_cluster_method == 'kmedoids'){
-          isolate({
-            variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            scaling=input$PRO_pca_scale, 
-                                            centering=input$PRO_pca_center, 
-                                            cluster_method=input$PRO_cluster_method, 
-                                            group_num = input$PRO_pam_group, 
-                                            var1 = input$PRO_pam_metric)
-          })
-        }else if(input$PRO_cluster_method == 'hclustering'){
-          isolate({
-            variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            scaling=input$PRO_pca_scale, 
-                                            centering=input$PRO_pca_center, 
-                                            cluster_method=input$PRO_cluster_method, 
-                                            group_num = input$PRO_hclust_group, 
-                                            var1 = input$PRO_hclust_dist, 
-                                            var2 = input$PRO_hclust_hclust)
-          })
-        }else if(input$PRO_cluster_method == 'dbscan'){
-          isolate({
-            variables$PRO.pca.result <- PCA(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                            scaling=input$PRO_pca_scale, 
-                                            centering=input$PRO_pca_center, 
-                                            cluster_method=input$PRO_cluster_method, 
-                                            var1 = input$PRO_dbscan_eps, 
-                                            var2 = input$PRO_dbscan_minPts)
-          })
-        }
-        
-        #### Output: PRO.pca.biplot ####
-        output$PRO.pca.biplot <- renderPlotly({
-          isolate({
-            validate(need(!is.null(variables$PRO.pca.result[[4]]), "Plot not showing. Missing value imputation is recommended."))
-            variables$PRO.pca.result[[4]]
-          })
-        })
-        
-        #### Output: PRO.pca.screeplot ####
-        output$PRO.pca.screeplot <- renderPlotly({
-          isolate({
-            validate(need(!is.null(variables$PRO.pca.result[[5]]), "Plot not showing. Missing value imputation is recommended."))
-            variables$PRO.pca.result[[5]]
-          })
-        })
-        
-        #### Output: PRO.pca.rotated.data ####
-        output$PRO.pca.rotated.data <- renderDataTable(server = FALSE,{
-          isolate({
-            validate(need(!is.null(variables$PRO.pca.result[[2]]), "Table not showing. Missing value imputation is recommended."))
-            
-            DT::datatable(variables$PRO.pca.result[[2]] %>% mutate_if(is.numeric, ~round(., 5)),
-                          #caption = 'Lipid expression data',
-                          #colnames = c('feature', ML_group_info()$label_name),
-                          escape = FALSE, selection = 'none', rownames = TRUE, 
-                          class = "nowrap row-border",
-                          extensions = c('Buttons', 'Scroller'),
-                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                         # rowCallback = JS(
-                                         #   "function(row, data) {",
-                                         #   "for (i = 1; i < data.length; i++) {",
-                                         #   "if (data[i]>1 | data[i]<1){",
-                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                         #   "}",
-                                         #   "}",
-                                         #   "}"),
-                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-          })
-        }) #output$PRO.pca.rotated.data <- renderDataTable
-        
-        #### Output: PRO.pca.contrib.table ####
-        output$PRO.pca.contrib.table <- renderDataTable(server = FALSE,{
-          isolate({
-            validate(need(!is.null(variables$PRO.pca.result[[3]]), "Table not showing. Missing value imputation is recommended."))
-            
-            DT::datatable(variables$PRO.pca.result[[3]] %>% mutate_if(is.numeric, ~round(., 5)),
-                          #caption = 'Lipid expression data',
-                          #colnames = c('feature', ML_group_info()$label_name),
-                          escape = FALSE, selection = 'none', rownames = TRUE, 
-                          class = "nowrap row-border",
-                          extensions = c('Buttons', 'Scroller'),
-                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                         # rowCallback = JS(
-                                         #   "function(row, data) {",
-                                         #   "for (i = 1; i < data.length; i++) {",
-                                         #   "if (data[i]>1 | data[i]<1){",
-                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                         #   "}",
-                                         #   "}",
-                                         #   "}"),
-                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-          })
-        }) #output$PRO.pca.contrib.table <- renderDataTable
-        
-      }else if(input$PRO_dim_redu_method == 'tsne'){
-        
-        if(input$PRO_cluster_method == 'kmeans'){
-          isolate({
-            variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                              pca=input$PRO_tsne_pca, 
-                                              perplexity=input$PRO_tsne_perplexity,
-                                              max_iter=input$PRO_tsne_max_iter, 
-                                              cluster_method=input$PRO_cluster_method, 
-                                              group_num = input$PRO_kmeans_group)
-          })
-        }else if(input$PRO_cluster_method == 'kmedoids'){
-          isolate({
-            variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                              pca=input$PRO_tsne_pca, 
-                                              perplexity=input$PRO_tsne_perplexity,
-                                              max_iter=input$PRO_tsne_max_iter, 
-                                              cluster_method=input$PRO_cluster_method, 
-                                              group_num = input$PRO_pam_group, 
-                                              var1 = input$PRO_pam_metric)      
-          })
-        }else if(input$PRO_cluster_method == 'hclustering'){
-          isolate({
-            variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                              pca=input$PRO_tsne_pca, 
-                                              perplexity=input$PRO_tsne_perplexity,
-                                              max_iter=input$PRO_tsne_max_iter, 
-                                              cluster_method=input$PRO_cluster_method, 
-                                              group_num = input$PRO_hclust_group, 
-                                              var1 = input$PRO_hclust_dist, 
-                                              var2 = input$PRO_hclust_hclust)       
-          })
-        }else if(input$PRO_cluster_method == 'dbscan'){
-          isolate({
-            variables$PRO.tsne.result <- tsne(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                              pca=input$PRO_tsne_pca, 
-                                              perplexity=input$PRO_tsne_perplexity,
-                                              max_iter=input$PRO_tsne_max_iter, 
-                                              cluster_method=input$PRO_cluster_method, 
-                                              var1 = input$PRO_dbscan_eps, 
-                                              var2 = input$PRO_dbscan_minPts)       
-          })
-        }
-        
-        #### Output: PRO.tsne.plot ####
-        output$PRO.tsne.plot <- renderPlotly({
-          isolate({
-            validate(need(!is.null(variables$PRO.tsne.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
-            variables$PRO.tsne.result[[2]]
-          })
-        })
-        
-        #### Output: PRO.tsne.table ####
-        output$PRO.tsne.table <- renderDataTable(server = FALSE,{
-          isolate({
-            validate(need(!is.null(variables$PRO.tsne.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-            
-            DT::datatable(variables$PRO.tsne.result[[1]],
-                          #caption = 'Lipid expression data',
-                          #colnames = c('feature', ML_group_info()$label_name),
-                          escape = FALSE, selection = 'none', rownames = TRUE, 
-                          class = "nowrap row-border",
-                          extensions = c('Buttons', 'Scroller'),
-                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                         # rowCallback = JS(
-                                         #   "function(row, data) {",
-                                         #   "for (i = 1; i < data.length; i++) {",
-                                         #   "if (data[i]>1 | data[i]<1){",
-                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                         #   "}",
-                                         #   "}",
-                                         #   "}"),
-                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-          })
-        }) #output$PRO.tsne.table <- renderDataTable
-        
-        
-      }else if(input$PRO_dim_redu_method == 'umap'){
-        
-        if(input$PRO_cluster_method == 'kmeans'){
-          isolate({
-            variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                              n_neighbors=input$PRO_umap_n_neighbors, 
-                                              scale=input$PRO_umap_scale,
-                                              metric=input$PRO_umap_metric,
-                                              cluster_method=input$PRO_cluster_method, 
-                                              group_num = input$PRO_kmeans_group)       
-          })
-        }else if(input$PRO_cluster_method == 'kmedoids'){
-          isolate({
-            variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                              n_neighbors=input$PRO_umap_n_neighbors, 
-                                              scale=input$PRO_umap_scale,
-                                              metric=input$PRO_umap_metric,
-                                              cluster_method=input$PRO_cluster_method, 
-                                              group_num = input$PRO_pam_group, 
-                                              var1 = input$PRO_pam_metric)       
-          })
-        }else if(input$PRO_cluster_method == 'hclustering'){
-          isolate({
-            variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                              n_neighbors=input$PRO_umap_n_neighbors, 
-                                              scale=input$PRO_umap_scale,
-                                              metric=input$PRO_umap_metric,
-                                              cluster_method=input$PRO_cluster_method, 
-                                              group_num = input$PRO_hclust_group, 
-                                              var1 = input$PRO_hclust_dist, 
-                                              var2 = input$PRO_hclust_hclust)       
-          })
-        }else if(input$PRO_cluster_method == 'dbscan'){
-          isolate({
-            variables$PRO.umap.result <- UMAP(PRO_exp_transform_data(), group_info = NULL, sig_feature = NULL,
-                                              n_neighbors=input$PRO_umap_n_neighbors, 
-                                              scale=input$PRO_umap_scale,
-                                              metric=input$PRO_umap_metric, 
-                                              cluster_method=input$PRO_cluster_method, 
-                                              var1 = input$PRO_dbscan_eps, 
-                                              var2 = input$PRO_dbscan_minPts)       
-          })
-        }
-        
-        #### Output: PRO.umap.plot ####
-        output$PRO.umap.plot <- renderPlotly({
-          isolate({
-            validate(need(!is.null(variables$PRO.umap.result[[2]]), "Plot not showing. Missing value imputation is recommended."))
-            variables$PRO.umap.result[[2]]
-          })
-        })
-        
-        #### Output: PRO.umap.table ####
-        output$PRO.umap.table <- renderDataTable(server = FALSE,{
-          isolate({
-            validate(need(!is.null(variables$PRO.umap.result[[1]]), "Table not showing. Missing value imputation is recommended."))
-            
-            DT::datatable(variables$PRO.umap.result[[1]],
-                          #caption = 'Lipid expression data',
-                          #colnames = c('feature', ML_group_info()$label_name),
-                          escape = FALSE, selection = 'none', rownames = TRUE, 
-                          class = "nowrap row-border",
-                          extensions = c('Buttons', 'Scroller'),
-                          options = list(scrollX = TRUE, pageLength = 5, autoWidth = FALSE, 
-                                         # rowCallback = JS(
-                                         #   "function(row, data) {",
-                                         #   "for (i = 1; i < data.length; i++) {",
-                                         #   "if (data[i]>1 | data[i]<1){",
-                                         #   "$('td:eq('+i+')', row).html(data[i].toExponential(2));",
-                                         #   "}",
-                                         #   "}",
-                                         #   "}"),
-                                         deferRender = TRUE, scrollY = 200, scroller = TRUE, #Scroller
-                                         dom = 'Bfrtip', buttons = list('csv', 'copy'), #Buttons
-                                         columnDefs = list(list(className = 'dt-center', targets = "_all"))))
-          })
-        }) #output$PRO.umap.table <- renderDataTable
-        
-      }
-    })
-  }) #observeEvent(input$PRO_dim_redu_method,
-
-})
-
+}) ## observeEvent # PRO_dim_redu_reset
 
 
 ##### PCA #####
 #### Function: PCA_variable ####
-PRO.pca.variable <- reactive({
-  if(!is.null(variables$PRO.pca.result[[1]])){
-    PCA_variable(variables$PRO.pca.result[[1]],
-                 as.numeric(input$PRO_pca_variable_topN))
-  }else{
-    NULL
-  }
-  
+shiny::observeEvent(input$PRO_pca_variable_topN, {
+  shiny::isolate({
+    tryCatch(
+      {
+        if(!is.null(variables$PRO.pca.result)){
+          ## cluster method parameter ##
+          cluster_num <- switch(input$PRO_cluster_method,
+                                kmeans=input$PRO_kmeans_group,
+                                kmedoids=input$PRO_pam_group,
+                                hclustering=input$PRO_hclust_group,
+                                dbscan=NULL)
+          kmedoids_metric <- if(input$PRO_cluster_method == 'kmedoids'){ input$PRO_pam_metric }else{ NULL }
+          distfun <- if(input$PRO_cluster_method == 'hclustering'){ input$PRO_hclust_dist }else{ NULL }
+          hclustfun <- if(input$PRO_cluster_method == 'hclustering'){ input$PRO_hclust_hclust }else{ NULL }
+          eps <- if(input$PRO_cluster_method == 'dbscan'){ input$PRO_dbscan_eps }else{ NULL }
+          minPts <- if(input$PRO_cluster_method == 'dbscan'){ input$PRO_dbscan_minPts }else{ NULL }
+          n_PC <- if(input$PRO_pca_contrib_PC == '1_2'){ c(1, 2) }else{ as.numeric(input$PRO_pca_contrib_PC) }
+          
+          if(input$PRO_cluster_method == 'dbscan'){
+            if(is.numeric(eps)){
+              if(eps < 0.1){
+                eps <- 0.1
+                shiny::showNotification("The epsilon must be greater than 0.1, so it is calculated by replacing it with 0.1.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_dbscan_eps', value=0.1)
+              }
+            }else{
+              eps <- 0.5
+              shiny::showNotification("The epsilon must be numeric, so it is calculated by replacing it with 0.5.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_dbscan_eps', value=0.5)
+            }
+            
+            if(is.numeric(minPts)){
+              if(minPts > 22){
+                minPts <- 22
+                shiny::showNotification("The minPts must be between 1 and 22, so it is calculated by replacing it with 22.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_dbscan_minPts', value=22)
+              }else if(input$PRO_dbscan_minPts < 1){
+                minPts <- 1
+                shiny::showNotification("The minPts must be between 1 and 22, so it is calculated by replacing it with 1.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_dbscan_minPts', value=1)
+              }
+            }else{
+              minPts <- 1
+              shiny::showNotification("The minPts must be numeric, so it is calculated by replacing it with 1.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_dbscan_minPts',value=1)
+            }
+          }
+          variables$PRO.dim.redu.pca.download.log <- 1
+          variables$PRO.dim.redu.pca.topN.download.log <- 1
+          variables$PRO.pca.result <- LipidSigR::dr_pca(
+            processed_se=variables$PRO.processed.SE, scaling=TRUE,
+            centering=TRUE, clustering=input$PRO_cluster_method,
+            cluster_num=cluster_num, kmedoids_metric=kmedoids_metric, distfun=distfun,
+            hclustfun=hclustfun, eps=eps, minPts=minPts, feature_contrib_pc=n_PC, plot_topN=input$PRO_pca_variable_topN)
+        }
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Dimensionality reduction PCA topN error!",
+          text=as.character(e$message),
+          type="error")
+        #### shinyjs show/hide results ####
+        shinyjs::hide('PRO_dim_redu_result_div')
+      }
+    )
+  })
 })
 
-#### Function: PCA_contrib ####
-PRO.pca.contrib <- reactive({
-  if(!is.null(variables$PRO.pca.result[[1]])){
-    if(input$PRO_pca_contrib_PC == '1_2'){
-      PCA_contrib(variables$PRO.pca.result[[1]],
-                  n_PC = c(1, 2),
-                  as.numeric(input$PRO_pca_contrib_topN))
-    }else{
-      PCA_contrib(variables$PRO.pca.result[[1]],
-                  n_PC = as.numeric(input$PRO_pca_contrib_PC),
-                  as.numeric(input$PRO_pca_contrib_topN))
-    }
-  }else{
-    NULL
-  }
-  
+shiny::observeEvent(input$PRO_pca_contrib_PC, {
+  shiny::isolate({
+    tryCatch(
+      {
+        if(!is.null(variables$PRO.pca.result)){
+          ## cluster method parameter ##
+          cluster_num <- switch(input$PRO_cluster_method,
+                                kmeans=input$PRO_kmeans_group,
+                                kmedoids=input$PRO_pam_group,
+                                hclustering=input$PRO_hclust_group,
+                                dbscan=NULL)
+          kmedoids_metric <- if(input$PRO_cluster_method == 'kmedoids'){ input$PRO_pam_metric }else{ NULL }
+          distfun <- if(input$PRO_cluster_method == 'hclustering'){ input$PRO_hclust_dist }else{ NULL }
+          hclustfun <- if(input$PRO_cluster_method == 'hclustering'){ input$PRO_hclust_hclust }else{ NULL }
+          eps <- if(input$PRO_cluster_method == 'dbscan'){ input$PRO_dbscan_eps }else{ NULL }
+          minPts <- if(input$PRO_cluster_method == 'dbscan'){ input$PRO_dbscan_minPts }else{ NULL }
+          n_PC <- if(input$PRO_pca_contrib_PC == '1_2'){ c(1, 2) }else{ as.numeric(input$PRO_pca_contrib_PC) }
+          
+          if(input$PRO_cluster_method == 'dbscan'){
+            if(is.numeric(eps)){
+              if(eps < 0.1){
+                eps <- 0.1
+                shiny::showNotification("The epsilon must be greater than 0.1, so it is calculated by replacing it with 0.1.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_dbscan_eps', value=0.1)
+              }
+            }else{
+              eps <- 0.5
+              shiny::showNotification("The epsilon must be numeric, so it is calculated by replacing it with 0.5.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_dbscan_eps', value=0.5)
+            }
+            
+            if(is.numeric(minPts)){
+              if(minPts > 22){
+                minPts <- 22
+                shiny::showNotification("The minPts must be between 1 and 22, so it is calculated by replacing it with 22.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_dbscan_minPts', value=22)
+              }else if(input$PRO_dbscan_minPts < 1){
+                minPts <- 1
+                shiny::showNotification("The minPts must be between 1 and 22, so it is calculated by replacing it with 1.", type="warning")
+                shiny::updateNumericInput(inputId='PRO_dbscan_minPts', value=1)
+              }
+            }else{
+              minPts <- 1
+              shiny::showNotification("The minPts must be numeric, so it is calculated by replacing it with 1.", type="warning")
+              shiny::updateNumericInput(inputId='PRO_dbscan_minPts',value=1)
+            }
+          }
+          variables$PRO.dim.redu.pca.download.log <- 1
+          variables$PRO.dim.redu.pca.topN.download.log <- 1
+          variables$PRO.pca.result <- LipidSigR::dr_pca(
+            processed_se=variables$PRO.processed.SE, scaling=TRUE,
+            centering=TRUE, clustering=input$PRO_cluster_method,
+            cluster_num=cluster_num, kmedoids_metric=kmedoids_metric, distfun=distfun,
+            hclustfun=hclustfun, eps=eps, minPts=minPts, feature_contrib_pc=n_PC, plot_topN=input$PRO_pca_variable_topN)
+        }
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Dimensionality reduction PCA principal component error!",
+          text=as.character(e$message),
+          type="error")
+        #### shinyjs show/hide results ####
+        shinyjs::hide('PRO_dim_redu_result_div')
+      }
+    )
+  })
 })
+
+#### Output: PRO.pca.plot ####
+output$PRO.pca.plot <- plotly::renderPlotly({
+  shiny::validate(shiny::need(!is.null(variables$PRO.pca.result$interactive_pca), "Plot not showing. Missing value imputation is recommended."))
+  variables$PRO.pca.result$interactive_pca
+})
+
+#### Output: PRO.pca.screeplot ####
+output$PRO.pca.screeplot <- plotly::renderPlotly({
+  shiny::validate(shiny::need(!is.null(variables$PRO.pca.result$interactive_screePlot), "Plot not showing. Missing value imputation is recommended."))
+  variables$PRO.pca.result$interactive_screePlot
+})
+
+#### Output: PRO.pca.rotated.data ####
+output$PRO.pca.rotated.data <- DT::renderDataTable(server=FALSE, {
+  shiny::validate(shiny::need(!is.null(variables$PRO.pca.result$pca_rotated_data), "Table not showing. Missing value imputation is recommended."))
+  DT::datatable(variables$PRO.pca.result$pca_rotated_data %>%
+                  dplyr::mutate_if(is.numeric, ~round(., 5)),
+                escape=FALSE, selection='none', rownames=TRUE,
+                class="nowrap row-border",
+                extensions=c('Buttons', 'Scroller'),
+                options=list(scrollX=TRUE, pageLength=5, autoWidth=FALSE,
+                             deferRender=TRUE, scrollY=200, scroller=TRUE, #Scroller
+                             dom='Bfrtip', buttons=list('csv', 'copy'), #Buttons
+                             columnDefs=list(list(className='dt-center', targets="_all"))))
+}) #output$PRO.pca.rotated.data <- renderDataTable
+
+#### Output: PRO.pca.contrib.table ####
+output$PRO.pca.contrib.table <- DT::renderDataTable(server=FALSE, {
+  shiny::validate(shiny::need(!is.null(variables$PRO.pca.result$table_pca_contribution), "Table not showing. Missing value imputation is recommended."))
+
+  DT::datatable(variables$PRO.pca.result$table_pca_contribution %>%
+                  dplyr::mutate_if(is.numeric, ~round(., 5)),
+                escape=FALSE, selection='none', rownames=TRUE,
+                class="nowrap row-border",
+                extensions=c('Buttons', 'Scroller'),
+                options=list(scrollX=TRUE, pageLength=5, autoWidth=FALSE,
+                             deferRender=TRUE, scrollY=200, scroller=TRUE, #Scroller
+                             dom='Bfrtip', buttons=list('csv', 'copy'), #Buttons
+                             columnDefs=list(list(className='dt-center', targets="_all"))))
+}) #output$PRO.pca.contrib.table <- renderDataTable
 
 #### Output: PRO.pca.variable ####
-output$PRO.pca.variable <- renderPlotly({
-  validate(need(!is.null(PRO.pca.variable()[[1]]), "Plot not showing. Missing value imputation is recommended."))
-  PRO.pca.variable()[[1]]
+output$PRO.pca.variable <- plotly::renderPlotly({
+  shiny::validate(shiny::need(!is.null(variables$PRO.pca.result$interactive_variablePlot), "Plot not showing. Missing value imputation is recommended."))
+  variables$PRO.pca.result$interactive_variablePlot
 })
 
 #### Output: PRO.pca.contrib ####
-output$PRO.pca.contrib <- renderPlotly({
-  validate(need(!is.null(PRO.pca.contrib()[[1]]), "Plot not showing. Missing value imputation is recommended."))
-  PRO.pca.contrib()[[1]]
+output$PRO.pca.contrib <- plotly::renderPlotly({
+  shiny::validate(shiny::need(!is.null(variables$PRO.pca.result$interactive_feature_contribution), "Plot not showing. Missing value imputation is recommended."))
+  variables$PRO.pca.result$interactive_feature_contribution
 })
 
-#### Update sliderInput ####
-observe({
-  VALUE <- ifelse(nrow(variables$PRO.pca.result[[3]]) < 10, nrow(variables$PRO.pca.result[[3]]), 10)
-  updateSliderInput(session, 
-                    inputId = 'PRO_pca_variable_topN', 
-                    value = VALUE,
-                    max = nrow(variables$PRO.pca.result[[3]]))
-  updateSliderInput(session, 
-                    inputId = 'PRO_pca_contrib_topN', 
-                    value = VALUE,
-                    max = nrow(variables$PRO.pca.result[[3]]))
+
+shiny::observeEvent(input$PRO.dim.redu.pca.download.start,{
+  shiny::isolate({
+    tryCatch(
+      {
+        if(variables$PRO.dim.redu.pca.download.log == 1){
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download", display_pct=TRUE, value=0)
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=33)
+          output$PRO.dim.redu.pca.download <- shiny::downloadHandler(
+            filename=function(){
+              paste("PRO.dim.redu.pca.zip", sep="")
+            },
+            content=function(file){
+              temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+              dir.create(temp_directory)
+              ## PCA plot ##
+              grDevices::pdf(file.path(temp_directory,'PCA.pdf'), width=8, height=6)
+              print(variables$PRO.pca.result$static_pca)
+              grDevices::dev.off()
+              ## PCA scree plot ##
+              grDevices::pdf(file.path(temp_directory,'PCA.scree.pdf'), width=8, height=6)
+              print(variables$PRO.pca.result$static_screePlot)
+              grDevices::dev.off()
+              ## table  ##
+              write.csv(variables$PRO.pca.result$pca_rotated_data, file=file.path(temp_directory,'PCA.rotated.csv'))
+              write.csv(variables$PRO.pca.result$table_pca_contribution, file=file.path(temp_directory,'PCA.contribution.csv'))
+              ## zip all file ##
+              zip::zip(zipfile=file, files=dir(temp_directory), root=temp_directory)
+            },
+            contentType="application/zip"
+          )
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=66)
+          variables$PRO.dim.redu.pca.download.log <- 2
+          shinyjs::runjs("document.getElementById('PRO.dim.redu.pca.download.start').click();")
+        }else{
+          shinyjs::runjs("document.getElementById('PRO.dim.redu.pca.download').click();")
+          shinyWidgets::updateProgressBar(
+            session=session, id="data_progress", title="done", value=100)
+          shinyWidgets::closeSweetAlert(session=session)
+        }
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Dimensionality reduction PCA download error!",
+          text=as.character(e$message),
+          type="error")
+      }
+    )
+  })
 })
 
+shiny::observeEvent(input$PRO.dim.redu.pca.topN.download.start,{
+  shiny::isolate({
+    tryCatch(
+      {
+        if(variables$PRO.dim.redu.pca.topN.download.log == 1){
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download", display_pct=TRUE, value=0)
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=33)
+          output$PRO.dim.redu.pca.topN.download <- shiny::downloadHandler(
+            filename=function(){
+              paste("PRO.dim.redu.pca.topN.zip", sep="")
+            },
+            content=function(file){
+              temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+              dir.create(temp_directory)
+              ## PCA correlation circle plot ##
+              grDevices::pdf(file.path(temp_directory,'PCA.topN.variable.pdf'), width=8, height=6)
+              print(variables$PRO.pca.result$static_variablePlot)
+              grDevices::dev.off()
+              ## Feature contribution histogram ##
+              grDevices::pdf(file.path(temp_directory,'PCA.topN.contribution.pdf'), width=8, height=6)
+              print(variables$PRO.pca.result$static_feature_contribution)
+              grDevices::dev.off()
+              ## zip all file ##
+              zip::zip(zipfile=file, files=dir(temp_directory), root=temp_directory)
+            },
+            contentType="application/zip"
+          )
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=66)
+          variables$PRO.dim.redu.pca.topN.download.log <- 2
+          shinyjs::runjs("document.getElementById('PRO.dim.redu.pca.topN.download.start').click();")
+        }else{
+          shinyjs::runjs("document.getElementById('PRO.dim.redu.pca.topN.download').click();")
+          shinyWidgets::updateProgressBar(
+            session=session, id="data_progress", title="done", value=100)
+          shinyWidgets::closeSweetAlert(session=session)
+        }
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Dimensionality reduction PCA topN download error!",
+          text=as.character(e$message),
+          type="error")
+      }
+    )
+  })
+})
 ##### tSNE #####
-observe({
-  VALUE1 <- ifelse(PRO_sample_count()%%3 == 0, floor(PRO_sample_count()/3)-1, floor(PRO_sample_count()/3))
-  VALUE2 <- ifelse(VALUE1 < 5, VALUE1, 5)
-  updateNumericInput(session, 
-                     inputId = 'PRO_tsne_perplexity', 
-                     value = VALUE2,
-                     max = VALUE1)
+
+#### Output: PRO.tsne.plot ####
+output$PRO.tsne.plot <- plotly::renderPlotly({
+  shiny::validate(shiny::need(!is.null(variables$PRO.tsne.result$interactive_tsne), "Plot not showing. Missing value imputation is recommended."))
+  variables$PRO.tsne.result$interactive_tsne
 })
+
+#### Output: PRO.tsne.table ####
+output$PRO.tsne.table <- DT::renderDataTable(server=FALSE, {
+  shiny::isolate({
+    shiny::validate(shiny::need(!is.null(variables$PRO.tsne.result$tsne_result), "Table not showing. Missing value imputation is recommended."))
+    DT::datatable(variables$PRO.tsne.result$tsne_result,
+                  escape=FALSE, selection='none', rownames=TRUE,
+                  class="nowrap row-border",
+                  extensions=c('Buttons', 'Scroller'),
+                  options=list(scrollX=TRUE, pageLength=5, autoWidth=FALSE,
+                               deferRender=TRUE, scrollY=200, scroller=TRUE, #Scroller
+                               dom='Bfrtip', buttons=list('csv', 'copy'), #Buttons
+                               columnDefs=list(list(className='dt-center', targets="_all"))))
+  })
+}) #output$PRO.tsne.table <- renderDataTable
+
+shiny::observeEvent(input$PRO.dim.redu.tsne.download.start,{
+  shiny::isolate({
+    tryCatch(
+      {
+        if(variables$PRO.dim.redu.tsne.download.log == 1){
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download", display_pct=TRUE, value=0)
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=33)
+          output$PRO.dim.redu.tsne.download <- shiny::downloadHandler(
+            filename=function(){
+              paste("PRO.dim.redu.tsne.zip", sep="")
+            },
+            content=function(file){
+              temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+              dir.create(temp_directory)
+              ## UMAP plot ##
+              grDevices::pdf(file.path(temp_directory,'Tsne.pdf'), width=8, height=6)
+              print(variables$PRO.tsne.result$static_tsne)
+              grDevices::dev.off()
+              ## table  ##
+              write.csv(variables$PRO.tsne.result$tsne_result, file=file.path(temp_directory,'Tsne.csv'))
+              ## zip all file ##
+              zip::zip(zipfile=file, files=dir(temp_directory), root=temp_directory)
+            },
+            contentType="application/zip"
+          )
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=66)
+          variables$PRO.dim.redu.tsne.download.log <- 2
+          shinyjs::runjs("document.getElementById('PRO.dim.redu.tsne.download.start').click();")
+        }else{
+          shinyjs::runjs("document.getElementById('PRO.dim.redu.tsne.download').click();")
+          shinyWidgets::updateProgressBar(
+            session=session, id="data_progress", title="done", value=100)
+          shinyWidgets::closeSweetAlert(session=session)
+        }
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Dimensionality reduction t-SNE download error!",
+          text=as.character(e$message),
+          type="error")
+      }
+    )
+  })
+}) ## observeEvent #PRO.dim.redu.tsne.download.start
 
 ##### UMAP ######
-observe({
-  VALUE <- ifelse(PRO_sample_count() < 15, PRO_sample_count(), 15)
-  updateNumericInput(session, 
-                     inputId = 'PRO_umap_n_neighbors', 
-                     value = VALUE,
-                     max = PRO_sample_count())
+
+#### Output: PRO.umap.plot ####
+output$PRO.umap.plot <- plotly::renderPlotly({
+  shiny::validate(shiny::need(!is.null(variables$PRO.umap.result$interactive_umap), "Plot not showing. Missing value imputation is recommended."))
+  variables$PRO.umap.result$interactive_umap
 })
+
+#### Output: PRO.umap.table ####
+output$PRO.umap.table <- DT::renderDataTable(server=FALSE, {
+  shiny::validate(shiny::need(!is.null(variables$PRO.umap.result$umap_result), "Table not showing. Missing value imputation is recommended."))
+  DT::datatable(variables$PRO.umap.result$umap_result,
+                escape=FALSE, selection='none', rownames=TRUE,
+                class="nowrap row-border",
+                extensions=c('Buttons', 'Scroller'),
+                options=list(scrollX=TRUE, pageLength=5, autoWidth=FALSE,
+                             deferRender=TRUE, scrollY=200, scroller=TRUE, #Scroller
+                             dom='Bfrtip', buttons=list('csv', 'copy'), #Buttons
+                             columnDefs=list(list(className='dt-center', targets="_all"))))
+}) #output$PRO.umap.table <- renderDataTable
+
+shiny::observeEvent(input$PRO.dim.redu.umap.download.start,{
+  shiny::isolate({
+    tryCatch(
+      {
+        if(variables$PRO.dim.redu.umap.download.log == 1){
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download", display_pct=TRUE, value=0)
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=33)
+          output$PRO.dim.redu.umap.download <- shiny::downloadHandler(
+            filename=function(){
+              paste("PRO.dim.redu.umap.zip", sep="")
+            },
+            content=function(file){
+              temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+              dir.create(temp_directory)
+              ## UMAP plot ##
+              grDevices::pdf(file.path(temp_directory,'UMAP.pdf'), width=8, height=6)
+              print(variables$PRO.umap.result$static_umap)
+              grDevices::dev.off()
+              ## table  ##
+              write.csv(variables$PRO.umap.result$umap_result, file=file.path(temp_directory,'UMAP.csv'))
+              ## zip all file ##
+              zip::zip(zipfile=file, files=dir(temp_directory), root=temp_directory)
+            },
+            contentType="application/zip"
+          )
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=66)
+          variables$PRO.dim.redu.umap.download.log <- 2
+          shinyjs::runjs("document.getElementById('PRO.dim.redu.umap.download.start').click();")
+        }else{
+          shinyjs::runjs("document.getElementById('PRO.dim.redu.umap.download').click();")
+          shinyWidgets::updateProgressBar(
+            session=session, id="data_progress", title="done", value=100)
+          shinyWidgets::closeSweetAlert(session=session)
+        }
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Dimensionality reduction UMAP download error!",
+          text=as.character(e$message),
+          type="error")
+      }
+    )
+  })
+}) ## observeEvent #PRO.dim.redu.umap.download.start
 
 #######################################
 #######################################
@@ -994,64 +1345,122 @@ observe({
 #######################################
 
 #### control start button ####
-observeEvent(input$PRO_corr_heatmap_start, {
-  
-  #### shinyjs show/hide results ####
-  shinyjs::show('PRO.corr.heatmap.lipid')
-  shinyjs::show('PRO.corr.heatmap.sample')
-  
-  #### Function: Hclustering ####
-  isolate({
-    
-    #### Function: corr_heatmap ####
-    variables$PRO.corr.heatmap.result <- corr_heatmap(PRO_exp_transform_data(),
-                                                      corr_method = input$PRO_corr_heatmap_method,
-                                                      distfun = input$PRO_corr_heatmap_dist, 
-                                                      hclustfun = input$PRO_corr_heatmap_hclust)
-    
-    #### Output: PRO.corr.heatmap.lipid ####
-    output$PRO.corr.heatmap.lipid <- renderIheatmap({
-      
-      validate(need(!is.null(variables$PRO.corr.heatmap.result$lipids_hm), "Plot not showing. Missing value imputation is recommended."))
-      variables$PRO.corr.heatmap.result$lipids_hm
-      
-    }) #output$PRO.corr.heatmap.lipid <- renderIheatmap
-    
-    #### Output: PRO.corr.heatmap.sample ####
-    output$PRO.corr.heatmap.sample <- renderIheatmap({
-      
-      validate(need(!is.null(variables$PRO.corr.heatmap.result$sample_hm), "Plot not showing. Missing value imputation is recommended."))
-      variables$PRO.corr.heatmap.result$sample_hm
-      
-    }) #output$PRO.corr.heatmap.sample <- renderIheatmap
-    
-    #### Output: PRO.corr.heatmap.lipid.matrix ####
-    output$PRO.corr.heatmap.lipid.matrix <- downloadHandler(
-      filename = function() {
-        paste0(input$PRO_corr_heatmap_method, '_correlation_', input$PRO_corr_heatmap_dist, '_', 
-               input$PRO_corr_heatmap_hclust, "_lipid_matrix", ".csv")
+shiny::observeEvent(input$PRO_corr_heatmap_start, {
+  shiny::isolate({
+    tryCatch(
+      {
+        #### shinyjs show/hide results ####
+        shinyjs::show('PRO_corr_heatmap_result_div')
+        #### Function: corr_heatmap ####
+        variables$PRO.corr.heatmap.sample.result <-
+          LipidSigR::heatmap_correlation(
+            processed_se=variables$PRO.processed.SE, char=NULL,
+            transform=input$PRO_transformation, correlation=input$PRO_corr_heatmap_method,
+            distfun=input$PRO_corr_heatmap_dist, hclustfun=input$PRO_corr_heatmap_hclust, type='sample')
+        variables$PRO.corr.heatmap.class.result <-
+          LipidSigR::heatmap_correlation(
+            processed_se=variables$PRO.processed.SE, char=input$PRO_corr_heatmap_char,
+            transform=input$PRO_transformation, correlation=input$PRO_corr_heatmap_method,
+            distfun=input$PRO_corr_heatmap_dist, hclustfun=input$PRO_corr_heatmap_hclust, type='class')
+        variables$PRO.corr.heatmap.download.start.log <- 1
       },
-      content = function(file) {
-        write.csv(variables$PRO.corr.heatmap.result$reorder_lipids_corr_coef, file)
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Correlation heatmap error!",
+          text=as.character(e$message),
+          type="error")
+        #### shinyjs show/hide results ####
+        shinyjs::hide('PRO_corr_heatmap_result_div')
       }
-    ) #output$PRO.corr.heatmap.lipid.matrix
-    
-    #### Output: PRO.corr.heatmap.sample.matrix ####
-    output$PRO.corr.heatmap.sample.matrix <- downloadHandler(
-      filename = function() {
-        paste0(input$PRO_corr_heatmap_method, '_correlation_', input$PRO_corr_heatmap_dist, '_', 
-               input$PRO_corr_heatmap_hclust, "_sample_matrix", ".csv")
-      },
-      content = function(file) {
-        write.csv(variables$PRO.corr.heatmap.result$reorder_sample_corr_coef, file)
-      }
-    ) #output$PRO.corr.heatmap.sample.matrix
-    
+    )
   }) #isolate
-  
 }) #observeEvent(input$PRO_corr_heatmap_start
 
+#### control user reset button ####
+shiny::observeEvent(input$PRO_corr_heatmap_reset, {
 
+  #### shinyjs show/hide main panel ####
+  shinyjs::hide('PRO_corr_heatmap_result_div')
+
+  #### shinyjs reset control panel ####
+  shinyjs::reset('PRO_corr_heatmap_reset_div')
+
+  #### clear variables ####
+  variables$PRO.corr.heatmap.sample.result <- NULL
+  variables$PRO.corr.heatmap.class.result <- NULL
+  variables$PRO.corr.heatmap.download.start.log <- 1
+
+}) ## observeEvent # PRO_corr_heatmap_reset
+
+
+#### Output: PRO.corr.heatmap.class ####
+output$PRO.corr.heatmap.class <- iheatmapr::renderIheatmap({
+
+  variables$PRO.corr.heatmap.class.result$interactive_heatmap
+
+}) #output$PRO.corr.heatmap.class <- renderIheatmap
+
+#### Output: PRO.corr.heatmap.sample ####
+output$PRO.corr.heatmap.sample <- iheatmapr::renderIheatmap({
+  variables$PRO.corr.heatmap.sample.result$interactive_heatmap
+}) #output$PRO.corr.heatmap.sample <- renderIheatmap
+
+#### control start button ####
+shiny::observeEvent(input$PRO.corr.heatmap.download.start,{
+  shiny::isolate({
+    tryCatch(
+      {
+        if(variables$PRO.corr.heatmap.download.start.log == 1){
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download", display_pct=TRUE, value=0)
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=33)
+          output$PRO.corr.heatmap.download <- shiny::downloadHandler(
+            filename=function(){
+              paste("PRO.corr.heatmap.zip", sep="")
+            },
+            content=function(file){
+              temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+              dir.create(temp_directory)
+              ## Heatmap by lipid characteristics ##
+              grDevices::pdf(file.path(temp_directory,'Characteristics.pdf'), width=8, height=6)
+              print(variables$PRO.corr.heatmap.class.result$static_heatmap)
+              grDevices::dev.off()
+              ## Heatmap by sample ##
+              grDevices::pdf(file.path(temp_directory,'Sample.pdf'), width=8, height=6)
+              print(variables$PRO.corr.heatmap.sample.result$static_heatmap)
+              grDevices::dev.off()
+              ## table  ##
+              utils::write.csv(variables$PRO.corr.heatmap.class.result$corr_coef_matrix, file=file.path(temp_directory,'Characteristics.csv'))
+              utils::write.csv(variables$PRO.corr.heatmap.sample.result$corr_coef_matrix, file=file.path(temp_directory,'Sample.csv'))
+              ## zip all file ##
+              zip::zip(zipfile=file, files=dir(temp_directory), root=temp_directory)
+            },
+            contentType="application/zip"
+          )
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=66)
+          variables$PRO.corr.heatmap.download.start.log <- 2
+          shinyjs::runjs("document.getElementById('PRO.corr.heatmap.download.start').click();")
+        }else{
+          shinyjs::runjs("document.getElementById('PRO.corr.heatmap.download').click();")
+          shinyWidgets::updateProgressBar(
+            session=session, id="data_progress", title="done", value=100)
+          shinyWidgets::closeSweetAlert(session=session)
+        }
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Correlation heatmap download error!",
+          text=as.character(e$message),
+          type="error")
+      }
+    )
+  })
+})
 
 ##################################################
 ##################################################
@@ -1059,36 +1468,89 @@ observeEvent(input$PRO_corr_heatmap_start, {
 ##################################################
 ##################################################
 
-#### update PRO lipid characteristic select input ####
-observe({
-  if(!is.null(PRO_lipid_char_table())){
-    lipid.char <- colnames(PRO_lipid_char_table())[-1]
-    updateSelectInput(session, "PRO_lipid_char",
-                      choices =  lipid.char)
-  }
-})
-
 #### Function: exp_compo_by_lipidinfo ####
-exp_compo_result <- reactive({
-  
-  exp_compo_by_lipidinfo(PRO_exp_data(), PRO_lipid_char_table(), input$PRO_lipid_char)
-  
+shiny::observeEvent(input$PRO_lipid_char, {
+  shiny::isolate({
+    tryCatch(
+      {
+        variables$PRO.lipid.profiling <- LipidSigR::lipid_profiling(
+          processed_se=variables$PRO.processed.SE, char=input$PRO_lipid_char)
+        variables$PRO.lipid.char.download.log <- 1
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Lipid characteristics profiling error!",
+          text=as.character(e$message),
+          type="error")
+      }
+    )
+  })
 })
 
 #### Output: PRO.lipid.char.barplot ####
-output$PRO.lipid.char.barplot <- renderPlotly({
-  exp_compo_result()$p.barplot.p
+output$PRO.lipid.char.barplot <- plotly::renderPlotly({
+  variables$PRO.lipid.profiling$interactive_char_barPlot
 })
 
 #### Output: PRO.lipid.char.composition ####
-output$PRO.lipid.char.composition <- renderPlotly({
-  exp_compo_result()$p.compos
+output$PRO.lipid.char.composition <- plotly::renderPlotly({
+  variables$PRO.lipid.profiling$interactive_lipid_composition
 })
 
-
-
-
-
-
-
-
+shiny::observeEvent(input$PRO.lipid.char.download.start,{
+  shiny::isolate({
+    tryCatch(
+      {
+        if(variables$PRO.lipid.char.download.log == 1){
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download", display_pct=TRUE, value=0)
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=33)
+          output$PRO.lipid.char.download <- shiny::downloadHandler(
+            filename=function(){
+              paste("PRO.lipid.char.zip", sep="")
+            },
+            content=function(file){
+              temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+              dir.create(temp_directory)
+              ## Bar plot classified by selected characteristic ##
+              grDevices::pdf(file.path(temp_directory,paste0(input$PRO_lipid_char,'.barPlot.pdf')), width=8, height=6)
+              print(variables$PRO.lipid.profiling$static_char_barPlot)
+              grDevices::dev.off()
+              ## Stacked horizontal bar chart of lipid class composition ##
+              grDevices::pdf(file.path(temp_directory,paste0(input$PRO_lipid_char,'.lipid.composition.pdf')), width=8, height=6)
+              print(variables$PRO.lipid.profiling$static_lipid_composition)
+              grDevices::dev.off()
+              ## table  ##
+              write.csv(variables$PRO.lipid.profiling$table_char_barPlot, file=file.path(temp_directory,paste0(input$PRO_lipid_char,'.barPlot.csv')))
+              write.csv(variables$PRO.lipid.profiling$table_lipid_composition, file=file.path(temp_directory,paste0(input$PRO_lipid_char,'.lipid.composition.csv')))
+              ## zip all file ##
+              zip::zip(zipfile=file, files=dir(temp_directory), root=temp_directory)
+            },
+            contentType="application/zip"
+          )
+          shinyWidgets::progressSweetAlert(
+            session=session, id="data_progress",
+            title="Download",display_pct=TRUE, value=66)
+          variables$PRO.lipid.char.download.log <- 2
+          shinyjs::runjs("document.getElementById('PRO.lipid.char.download.start').click();")
+        }else{
+          shinyjs::runjs("document.getElementById('PRO.lipid.char.download').click();")
+          shinyWidgets::updateProgressBar(
+            session=session, id="data_progress", title="done", value=100)
+          shinyWidgets::closeSweetAlert(session=session)
+        }
+      },
+      error=function(e) {
+        shinyWidgets::sendSweetAlert(
+          session=session, title="Lipid characteristics profiling download error!",
+          text=as.character(e$message),
+          type="error")
+        #### shinyjs show/hide results ####
+        shinyjs::hide('PRO_dim_redu_result_div')
+      }
+    )
+  })
+})

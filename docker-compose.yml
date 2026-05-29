@@ -1,0 +1,12 @@
+services:
+  lipidsig:
+    platform: linux/amd64
+    image: hsiucheng/lipidsig:2.0
+    container_name: lipidsig_app
+    ports:
+      - "3838:3838"
+    volumes:
+      - ./logs:/var/log/shiny-server
+    restart: unless-stopped
+    environment:
+      - SHINY_LOG_LEVEL=WARN
