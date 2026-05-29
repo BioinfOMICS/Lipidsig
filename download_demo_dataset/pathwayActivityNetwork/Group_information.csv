@@ -1,9 +1,0 @@
-sample_name,label_name,original_group_name,group,pair
-al_young_1,al_young_1,ctrl,ctrl,NA
-al_young_2,al_young_2,ctrl,ctrl,NA
-al_young_3,al_young_3,ctrl,ctrl,NA
-al_young_4,al_young_4,ctrl,ctrl,NA
-dr_young_1,dr_young_1,exp,exp,NA
-dr_young_2,dr_young_2,exp,exp,NA
-dr_young_3,dr_young_3,exp,exp,NA
-dr_young_4,dr_young_4,exp,exp,NA
