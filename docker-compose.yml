@@ -1,7 +1,7 @@
 services:
   lipidsig:
     platform: linux/amd64
-    image: hsiucheng/lipidsig:2.0
+    image: bioinfomics/lipidsig:2.0
     container_name: lipidsig_app
     ports:
       - "3838:3838"

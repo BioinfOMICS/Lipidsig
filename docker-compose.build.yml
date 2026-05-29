@@ -7,7 +7,7 @@ services:
     image: lipidsig:2.0
     container_name: lipidsig_app
     ports:
-      - "3838:3838"
+      - "3838:3838"        # access via http://localhost:3838/
     volumes:
       - ./logs:/var/log/shiny-server
     restart: unless-stopped

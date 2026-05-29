@@ -43,36 +43,50 @@ Git is needed to download the repository.
 
 ---
 
-## Installation & Launch
-
 ### Step 3 — Clone the repository
 
 Open a terminal (Command Prompt / PowerShell on Windows, Terminal on macOS/Linux) and run:
 
 ```bash
-git clone https://github.com/BioinfOMICS/LipidSig.git
+git clone https://github.com/bioinfomics/LipidSig.git
 cd LipidSig
 ```
+
 ---
 
-### Step 4 — Build and start the app
+## Installation Methods
+
+There are two ways to run LipidSig. Choose the one that fits your needs:
+
+---
+
+### Method 1 — Pre-built Image (Recommended)
+
+Downloads a ready-to-use image directly from Docker Hub. **No compilation required.**
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
-What this does:
-
-- `--build` builds the Docker image from the `Dockerfile` (only needed the first time, or after code updates)
-- `-d` runs the container in the background (detached mode)
-
-> **⏱ First-time build:** Expect **30–60 minutes** while Docker downloads the base image and compiles all R and Bioconductor packages. Subsequent launches take only a few seconds.
+> **⏱ First-time launch:** Docker will pull the pre-built image (~a few minutes depending on your connection). Subsequent launches take only a few seconds.
 
 ---
 
-### Step 5 — Open LipidSig in your browser
+### Method 2 — Build from Source
 
-Once the build is complete, open:
+Builds the Docker image locally from the source code. Useful if you want to modify the app or inspect every dependency.
+
+```bash
+docker compose -f docker-compose.build.yml up -d --build
+```
+
+> **⏱ First-time build:** Expect **30–60 minutes** while Docker compiles all R and Bioconductor packages from scratch.
+
+---
+
+## Open LipidSig in Your Browser
+
+Once the container is running (either method), open:
 
 ```
 http://localhost:3838/
@@ -89,20 +103,24 @@ You should see the LipidSig 2.0 interface.
 | Stop the app (keep the container) | `docker compose stop` |
 | Stop and remove the container | `docker compose down` |
 | Restart a stopped container | `docker compose start` |
-| Rebuild after a code update | `docker compose up -d --build` |
 
 ---
 
 ## Updating LipidSig
 
-When a new version is released:
+### Method 1 (pre-built image)
 
 ```bash
-# Pull the latest code
 git pull
+docker compose pull        # download the latest image from Docker Hub
+docker compose up -d
+```
 
-# Rebuild and restart
-docker compose up -d --build
+### Method 2 (build from source)
+
+```bash
+git pull
+docker compose -f docker-compose.build.yml up -d --build
 ```
 
 ---
