@@ -108,9 +108,7 @@ docker compose -f docker-compose.build.yml up -d --build
 ### 1. "Cannot connect to the Docker daemon"
  
 Docker Desktop is not running. Open it and wait for the whale icon to turn green, then try again.
- 
----
- 
+
 ### 2. App not loading at localhost:3838
  
 Check whether the container is running:
@@ -124,8 +122,6 @@ If it's running but the page won't load, check the logs for errors:
 ```bash
 docker compose logs -f
 ```
-
----
 
 ### 3. Port 3838 is already in use
  
@@ -143,8 +139,6 @@ docker compose up -d
 ```
  
 Access the app at `http://localhost:3939/` (or whichever port you chose).
-
----
 
 ### 4. Slow performance on Apple Silicon (M1/M2/M3)
 
