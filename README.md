@@ -1,106 +1,116 @@
 # LipidSig 2.0
 
-A comprehensive web-based platform for lipidomics data analysis, covering Profiling, Differential Expression, Data Check, Correlation, Machine Learning, Network, Enrichment, and ID Conversion.
+**LipidSig 2.0** is a comprehensive web-based platform for lipidomics data analysis. It provides an integrated workflow for lipidomics data processing, statistical analysis, visualization, enrichment analysis, machine learning, network analysis, correlation analysis, data quality checking, and lipid identifier conversion.
 
-> **Running LipidSig locally requires only Docker — no R installation needed.**
+> **You only need Docker to run LipidSig locally. No R, RStudio, or R packages required.**
 
 ---
 
-## Prerequisites
+## Requirements
 
-### Step 1 — Install Docker Desktop
+Before you start, make sure you have both of the following installed:
 
-Docker Desktop bundles the Docker Engine and the `docker compose` command. Install it for your operating system:
+### Docker Desktop
 
-| OS | Download |
-|---|---|
-| **Windows 10/11** | [https://docs.docker.com/desktop/install/windows-install/](https://docs.docker.com/desktop/install/windows-install/) |
-| **macOS (Intel & Apple Silicon)** | [https://docs.docker.com/desktop/install/mac-install/](https://docs.docker.com/desktop/install/mac-install/) |
-| **Linux (Ubuntu / Debian / Fedora)** | [https://docs.docker.com/desktop/install/linux-install/](https://docs.docker.com/desktop/install/linux-install/) |
+Docker Desktop runs the application inside a container.
 
-After installation, **start Docker Desktop** and wait until the whale icon in your taskbar/menu bar turns green (this means the Docker Engine is running).
+- [Windows](https://docs.docker.com/desktop/install/windows-install/)
+- [macOS (Intel & Apple Silicon)](https://docs.docker.com/desktop/install/mac-install/)
+- [Linux (Ubuntu / Debian / Fedora)](https://docs.docker.com/desktop/install/linux-install/)
 
-Verify the installation by opening a terminal and running:
+After installing, "open Docker Desktop" and wait until the whale icon in your taskbar turns green - this means Docker is ready. 
+
+Confirm it's working:
 
 ```bash
 docker --version
 docker compose version
 ```
 
-Both commands should print version numbers without errors.
+Both commands should print a version number without errors. 
 
----
+### Git
 
-### Step 2 — Install Git
+Git is used to download the LipidSig repository.
 
-Git is needed to download the repository.
-
-| OS | Instructions |
+| OS | How to install |
 |---|---|
-| **Windows** | Download from [https://git-scm.com/download/win](https://git-scm.com/download/win) and run the installer |
-| **macOS** | Run `git --version` in Terminal — macOS will prompt to install Xcode Command Line Tools if Git is absent |
-| **Linux** | `sudo apt install git` (Debian/Ubuntu) or `sudo dnf install git` (Fedora) |
+| Windows | Download from [git-scm.com](https://git-scm.com/download/win) and run the installer |
+| macOS | Run `git --version` in Terminal — macOS will prompt you to install it |
+| Linux | `sudo apt install git` (Debian/Ubuntu) or `sudo dnf install git` (Fedora) |
 
 ---
 
-### Step 3 — Clone the repository
+## Installation
 
-Open a terminal (Command Prompt / PowerShell on Windows, Terminal on macOS/Linux) and run:
+**1. Clone the repository**
 
 ```bash
 git clone https://github.com/bioinfomics/LipidSig.git
 cd LipidSig
 ```
 
----
-
-## Installation Methods
----
-
-Downloads a ready-to-use image directly from Docker Hub. **No compilation required.**
+**2. Start the app**
 
 ```bash
 docker compose up -d
 ```
 
-> **⏱ First-time launch:** Docker will pull the pre-built image (~a few minutes depending on your connection). Subsequent launches take only a few seconds.
+The first time you run this, Docker will download the pre-built image from Docker Hub (a few minutes depending on your connection). After that, it starts in seconds.
+ 
+**3. Open LipidSig in your browser**
 
----
-
-## Open LipidSig in Your Browser
-
-Once the container is running (either method), open:
+Wait a few moments for the container to finish starting up, then navaigate to:
 
 ```
 http://localhost:3838/
 ```
-
-You should see the LipidSig 2.0 interface.
+ 
+You should see the LipidSig 2.0 interface. If you get a "site can't be reached" error, the container is still starting - wait a moment and refresh. 
 
 ---
 
 ## Stopping and Restarting
-
+ 
 | Action | Command |
 |---|---|
-| Stop the app (keep the container) | `docker compose stop` |
+| Pause the app (keeps the container) | `docker compose stop` |
+| Resume a paused app | `docker compose start` |
 | Stop and remove the container | `docker compose down` |
-| Restart a stopped container | `docker compose start` |
-
+ 
 ---
 
 ## Updating LipidSig
 
-### Method 1 (pre-built image)
-
+Pull the latest code and image, then restart:
+ 
 ```bash
 git pull
-docker compose pull        # download the latest image from Docker Hub
+docker compose pull
 docker compose up -d
 ```
 
-### Method 2 (build from source)
+---
 
+
+
+
+## Updating LipidSig
+
+**Method 1 — Pre-built image (recommended)**
+ 
+Downloads the latest image from Docker Hub. No compilation required.
+ 
+```bash
+git pull
+docker compose pull
+docker compose up -d
+```
+ 
+**Method 2 — Build from source**
+ 
+Use this if you've made local changes to the source code.
+ 
 ```bash
 git pull
 docker compose -f docker-compose.build.yml up -d --build
@@ -109,39 +119,51 @@ docker compose -f docker-compose.build.yml up -d --build
 ---
 
 ## Troubleshooting
-
-### "Cannot connect to the Docker daemon"
-
-Docker Desktop is not running. Open Docker Desktop and wait for the engine to start (green icon), then retry.
-
-### App not loading at localhost:3838
-
+ 
+**"Cannot connect to the Docker daemon"**
+ 
+Docker Desktop is not running. Open it and wait for the whale icon to turn green, then try again.
+ 
+---
+ 
+**App not loading at localhost:3838**
+ 
 Check whether the container is running:
-
+ 
 ```bash
 docker compose ps
 ```
-
-View the application logs for errors:
-
+ 
+If it's running but the page won't load, check the logs for errors:
+ 
 ```bash
 docker compose logs -f
 ```
 
-### Port 3838 is already in use
+---
 
-Edit `docker-compose.yml` and change the left side of the port mapping:
-
+**Port 3838 is already in use**
+ 
+Open `docker-compose.yml` and change the left side of the port mapping:
+ 
 ```yaml
 ports:
-  - "3939:3838"   # access via http://localhost:3939/
+  - "3939:3838"   # change 3939 to any free port you prefer
 ```
+ 
+Then restart:
+ 
+```bash
+docker compose up -d
+```
+ 
+Access the app at `http://localhost:3939/` (or whichever port you chose).
 
-Then run `docker compose up -d` again.
+---
 
-### Slow performance on Apple Silicon (M1/M2/M3)
+**Slow performance on Apple Silicon (M1/M2/M3)**
 
-The image is built for `linux/amd64`. Docker Desktop uses Rosetta 2 emulation on Apple Silicon, which may reduce performance for CPU-intensive analyses. This is expected behaviour.
+The image is built for `linux/amd64`. On Apple Silicon, Docker runs it through Rosetta 2 emulation, which can slow down CPU-intensive analyses. This is expected and not a bug.
 
 ---
 
@@ -157,7 +179,7 @@ The image is built for `linux/amd64`. Docker Desktop uses Rosetta 2 emulation on
 
 ## File Upload Limit
 
-LipidSig accepts files up to **30 MB** per upload. If your dataset exceeds this limit, contact the maintainers or edit the `options(shiny.maxRequestSize = ...)` line in `server.R` before rebuilding.
+LipidSig accepts files up to **30 MB** per upload. If your dataset exceeds this limit, contact the maintainers or edit the `options(shiny.maxRequestSize = ...)` line in `server.R` and rebuild the image.
 
 ---
 
