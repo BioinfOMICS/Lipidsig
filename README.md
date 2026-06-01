@@ -105,13 +105,13 @@ docker compose -f docker-compose.build.yml up -d --build
 
 ## Troubleshooting
  
-**"Cannot connect to the Docker daemon"**
+### 1. "Cannot connect to the Docker daemon"
  
 Docker Desktop is not running. Open it and wait for the whale icon to turn green, then try again.
  
 ---
  
-**App not loading at localhost:3838**
+### 2. App not loading at localhost:3838
  
 Check whether the container is running:
  
@@ -127,7 +127,7 @@ docker compose logs -f
 
 ---
 
-**Port 3838 is already in use**
+### 3. Port 3838 is already in use
  
 Open `docker-compose.yml` and change the left side of the port mapping:
  
@@ -146,7 +146,7 @@ Access the app at `http://localhost:3939/` (or whichever port you chose).
 
 ---
 
-**Slow performance on Apple Silicon (M1/M2/M3)**
+### 4. Slow performance on Apple Silicon (M1/M2/M3)
 
 The image is built for `linux/amd64`. On Apple Silicon, Docker runs it through Rosetta 2 emulation, which can slow down CPU-intensive analyses. This is expected and not a bug.
 
