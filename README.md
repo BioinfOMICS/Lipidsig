@@ -55,12 +55,7 @@ cd LipidSig
 ---
 
 ## Installation Methods
-
-There are two ways to run LipidSig. Choose the one that fits your needs:
-
 ---
-
-### Method 1 — Pre-built Image (Recommended)
 
 Downloads a ready-to-use image directly from Docker Hub. **No compilation required.**
 
@@ -69,18 +64,6 @@ docker compose up -d
 ```
 
 > **⏱ First-time launch:** Docker will pull the pre-built image (~a few minutes depending on your connection). Subsequent launches take only a few seconds.
-
----
-
-### Method 2 — Build from Source
-
-Builds the Docker image locally from the source code. Useful if you want to modify the app or inspect every dependency.
-
-```bash
-docker compose -f docker-compose.build.yml up -d --build
-```
-
-> **⏱ First-time build:** Expect **30–60 minutes** while Docker compiles all R and Bioconductor packages from scratch.
 
 ---
 
