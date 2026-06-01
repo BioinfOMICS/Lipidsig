@@ -18,16 +18,26 @@ Docker Desktop runs the application inside a container.
 - [macOS (Intel & Apple Silicon)](https://docs.docker.com/desktop/install/mac-install/)
 - [Linux (Ubuntu / Debian / Fedora)](https://docs.docker.com/desktop/install/linux-install/)
 
-After installing, "open Docker Desktop" and wait until the whale icon in your taskbar turns green - this means Docker is ready. 
-
-Confirm it's working:
-
+After installing, confirm Docker is ready:
+ 
+**Windows / macOS:** Open Docker Desktop and wait until the whale icon in your taskbar turns green.
+ 
+**Linux:** If you installed Docker Desktop, the tray icon may not appear depending on your desktop environment. Instead, verify Docker is running with:
+ 
+```bash
+sudo systemctl status docker
+```
+ 
+You should see `Active: active (running)` in the output.
+ 
+Then confirm the installation on all platforms:
+ 
 ```bash
 docker --version
 docker compose version
 ```
 
-Both commands should print a version number without errors. 
+Both commands should print a version number without errors.
 
 ### Git
 
