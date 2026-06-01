@@ -82,21 +82,6 @@ You should see the LipidSig 2.0 interface. If you get a "site can't be reached" 
 
 ## Updating LipidSig
 
-Pull the latest code and image, then restart:
- 
-```bash
-git pull
-docker compose pull
-docker compose up -d
-```
-
----
-
-
-
-
-## Updating LipidSig
-
 **Method 1 — Pre-built image (recommended)**
  
 Downloads the latest image from Docker Hub. No compilation required.
