@@ -179,8 +179,3 @@ Chia-Hsin Liu, Pei-Chun Shen, Wen-Jen Lin, Hsiu-Cheng Liu, Meng-Hsin Tsai, Tzu-Y
 
 Chia-Hsin Liu, Pei-Chun Shen, Wen-Jen Lin, Hsiu-Cheng Liu, Meng-Hsin Tsai, Yo-Liang Lai, Yu-De Wang, Mien-Chie Hung, Wei-Chung Cheng, LipidSigR: a R-based solution for integrated lipidomics data analysis and visualization, Bioinformatics Advances, Volume 5, Issue 1, 2025, vbaf047, doi: <a href="https://doi.org/10.1093/bioadv/vbaf047" target="_blank">10.1093/bioadv/vbaf047</a>. PMID: 40110562.
 
----
-
-## License
-
-*(License information to be added)*
