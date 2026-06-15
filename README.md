@@ -16,7 +16,6 @@ Docker Desktop runs the application inside a container.
 
 - [Windows](https://docs.docker.com/desktop/install/windows-install/)
 - [macOS (Intel & Apple Silicon)](https://docs.docker.com/desktop/install/mac-install/)
-- [Linux (Ubuntu / Debian / Fedora)](https://docs.docker.com/desktop/install/linux-install/)
 
 After installing, confirm Docker is ready:
  
@@ -176,7 +175,9 @@ LipidSig accepts files up to **30 MB** per upload. If your dataset exceeds this 
 
 If you use LipidSig in your research, please cite:
 
-> *(Citation information to be added)*
+Chia-Hsin Liu, Pei-Chun Shen, Wen-Jen Lin, Hsiu-Cheng Liu, Meng-Hsin Tsai, Tzu-Ya Huang, I-Chieh Chen, Yo-Liang Lai, Yu-De Wang, Mien-Chie Hung, Wei-Chung Cheng, LipidSig 2.0: integrating lipid characteristic insights into advanced lipidomics data analysis, Nucleic Acids Research, Volume 52, Issue W1, 5 July 2024, Pages W390–W397, doi: <a href="https://doi.org/10.1093/nar/gkae335" target="_blank">10.1093/nar/gkae335</a>. PMID: 38709887.
+
+Chia-Hsin Liu, Pei-Chun Shen, Wen-Jen Lin, Hsiu-Cheng Liu, Meng-Hsin Tsai, Yo-Liang Lai, Yu-De Wang, Mien-Chie Hung, Wei-Chung Cheng, LipidSigR: a R-based solution for integrated lipidomics data analysis and visualization, Bioinformatics Advances, Volume 5, Issue 1, 2025, vbaf047, doi: <a href="https://doi.org/10.1093/bioadv/vbaf047" target="_blank">10.1093/bioadv/vbaf047</a>. PMID: 40110562.
 
 ---
 
