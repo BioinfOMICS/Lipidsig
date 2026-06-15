@@ -1,21 +1,7 @@
-library(shiny)
-library(SHAPforxgboost)
-
 ## ── Global options (set once at startup, shared across all sessions) ──────────
+## NOTE: library() calls and source() of analysis functions have been moved to
+##       global.R so they execute only once at app startup, not per session.
 options(shiny.maxRequestSize = 30 * 1024^2)   # allow up to 30 MB file uploads
-
-## ── External analysis scripts (keep absolute paths as-is) ────────────────────
-source('www/functions/dataCheck-page.R')
-source('www/functions/lipidNameConversion.R')
-source('www/functions/utils-dataCheck.R')
-source('www/functions/char.tab.url.R')
-source('www/functions/dataCheck-otherpage.R')
-source('www/functions/dataSummary.R')
-source('www/functions/reactome_network.R')
-source('www/functions/get_reactome_path.R')
-source('www/functions/lipid_related_gene_network.R')
-source('www/functions/function_code.R')
-source('www/functions/annotation_human.R')
 
 shiny::shinyServer(function(input, output, session) {
 

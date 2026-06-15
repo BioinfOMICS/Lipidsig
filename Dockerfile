@@ -96,6 +96,15 @@ COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
 # ── 8. Permissions & expose ───────────────────────────────────
 RUN chown -R shiny:shiny /srv/shiny-server/lipidsig
 
+# ── 9. Warmup entrypoint ──────────────────────────────────────
+# Starts shiny-server, then sends a warmup request so the R process
+# finishes loading global.R before the first real user arrives.
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 3838
 
-CMD ["/usr/bin/shiny-server"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+  CMD curl -sf http://localhost:3838/ || exit 1
+
+CMD ["/usr/local/bin/docker-entrypoint.sh"]

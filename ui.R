@@ -1,13 +1,8 @@
-library(shiny)
-library(magrittr)
+## NOTE: library() calls have been moved to global.R
 
 #### Consolidated CSS (single source of truth) ####
 body.css <- "
 /* ── Layout ─────────────────────────────────────────── */
-#body_div {
-  width: 1200px;
-  margin: 15px auto;
-}
 #body_div {
   width: 1200px;
   margin: 15px auto;
@@ -243,27 +238,6 @@ shiny::shinyUI(shiny::fluidPage(
         $tab.tab("show");
       }
     }
-  </script>'),
-
-  ## ── 動態注入 navbar CSS（保證在 shinythemes 之後載入，一定蓋得過）──
-  htmltools::HTML('<script type="text/javascript">
-    $(document).ready(function() {
-      var navbarCSS = [
-        /* 移除 Bootstrap 預設 navbar <a> 的上下 padding */
-        ".navbar-default .navbar-nav>li>a { padding-top:0!important; padding-bottom:0!important; padding-left:6px!important; padding-right:6px!important; color:#f5f5f5!important; text-decoration:none!important; }",
-        /* <h4> 固定高度 + flexbox 垂直置中 + 字體縮小 */
-        ".navbar-default .navbar-nav>li>h4 { font-size:14px!important; margin:0!important; height:50px!important; display:flex!important; align-items:center!important; justify-content:center!important; padding:0!important; line-height:1.3; text-align:center; }",
-        /* <h4> 內的 <a> 繼承顏色 */
-        ".navbar-default .navbar-nav>li>h4>a { color:#f5f5f5!important; text-decoration:none!important; line-height:1.3; text-align:center; }",
-        ".navbar-default .navbar-nav>li>h4>a:hover { color:#18bc9c!important; }",
-        /* active tab 樣式 */
-        ".navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:hover { color:#18bc9c!important; background-color:transparent!important; }",
-        /* 避免影響頁面內的 nav-tabs 和 nav-pills */
-        ".nav-tabs>li>a { padding:10px 13px!important; }",
-        ".nav-pills>li>a { padding:10px 10px!important; }"
-      ].join(" ");
-      $("<style>").text(navbarCSS).appendTo("head");
-    });
   </script>'),
 
   ## ── Page body ───────────────────────────────────────────

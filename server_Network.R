@@ -1,4 +1,4 @@
-library(magrittr)
+## NOTE: library(magrittr) is now in global.R
 
 ##############################
 ##############################
@@ -1128,14 +1128,19 @@ shiny::observeEvent(input$NET_gatom_network_refresh, {
 ############################
 ####  Assign variables  ####
 ############################
-variables$NET.lipid.gene.path <- readRDS('www/mapping_table/lipid_gene_path.rds')
-variables$NET.all.interaction <- readRDS('www/mapping_table/reactome_all_interaction.rds')
-variables$NET.all.node <- readRDS('www/mapping_table/reactome_all_node.rds')
-variables$NET.complex <- readRDS('www/mapping_table/reactome_complex.rds')
-variables$NET.edge <- readRDS('www/mapping_table/reactome_edge.rds')
-variables$NET.node <- readRDS('www/mapping_table/reactome_node.rds')
-variables$NET.node.id.for.complex <- readRDS('www/mapping_table/reactome_node_id_for_complex.rds')
-variables$NET.uniprot <- readRDS('www/mapping_table/uniprot.rds')
+# Trigger lazy load of Network mapping tables (global.R defers disk reads until here).
+# On first call, reads ~9 MB from disk once; all subsequent calls are instant.
+local({
+  nd <- .load_net_data()
+  variables$NET.lipid.gene.path     <- nd$NET_lipid_gene_path
+  variables$NET.all.interaction     <- nd$NET_all_interaction
+  variables$NET.all.node            <- nd$NET_all_node
+  variables$NET.complex             <- nd$NET_complex
+  variables$NET.edge                <- nd$NET_edge
+  variables$NET.node                <- nd$NET_node
+  variables$NET.node.id.for.complex <- nd$NET_node_id_for_complex
+  variables$NET.uniprot             <- nd$NET_uniprot
+})
 
 ############################
 ####  Reactome pathway  ####
