@@ -41,7 +41,7 @@ Git is used to download the LipidSig repository.
 
 ## Installation
 
-### 1. Clone the repository**
+### 1. Clone the repository
 
 Open PowerShell, Command Prompt, or Terminal and run:
 
